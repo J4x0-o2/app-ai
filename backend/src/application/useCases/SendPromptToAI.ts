@@ -1,0 +1,71 @@
+import { ConversationRepository } from '../../domain/repositories/ConversationRepository';
+import { LangChainService } from '../../domain/services/LangChainService';
+import { Conversation } from '../../domain/entities/Conversation';
+import { Prompt } from '../../domain/entities/Prompt';
+import { AIResponse } from '../../domain/entities/AIResponse';
+import { SendPromptRequest, SendPromptResponse } from '../dto/ChatDTO';
+import { randomUUID } from 'crypto';
+
+export class SendPromptToAI {
+    constructor(
+        private conversationRepository: ConversationRepository,
+        private langchainService: LangChainService
+    ) { }
+
+    async execute(request: SendPromptRequest): Promise<SendPromptResponse> {
+        let conversation: Conversation | null = null;
+        let conversationId = request.conversationId;
+
+        if (conversationId) {
+            conversation = await this.conversationRepository.findById(conversationId);
+        }
+
+        if (!conversation) {
+            conversationId = randomUUID();
+            conversation = new Conversation(conversationId, request.userId, new Date());
+            await this.conversationRepository.saveConversation(conversation);
+        }
+
+        const promptId = randomUUID();
+        const promptEntity = new Prompt(
+            promptId,
+            conversationId!,
+            request.userId,
+            request.prompt,
+            request.model,
+            new Date()
+        );
+
+        await this.conversationRepository.savePrompt(promptEntity);
+
+        const history = await this.conversationRepository.getPromptsByConversationId(conversationId!);
+        const mappedHistory = history.map(p => ({
+            role: 'user',
+            content: p.content
+        }));
+
+        const langchainResponse = await this.langchainService.processPrompt({
+            prompt: request.prompt,
+            conversationHistory: mappedHistory,
+            relevantDocuments: request.documentIds || []
+        });
+
+        const aiResponseEntity = new AIResponse(
+            randomUUID(),
+            promptId,
+            langchainResponse,
+            request.model,
+            150, // mock tokens
+            new Date()
+        );
+
+        promptEntity.response = aiResponseEntity;
+
+        await this.conversationRepository.savePrompt(promptEntity);
+
+        return {
+            conversationId: conversationId!,
+            response: aiResponseEntity
+        };
+    }
+}
