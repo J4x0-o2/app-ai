@@ -1,0 +1,116 @@
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    background-color: var(--color-bg-app);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem;
+    gap: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.inputWrapper:focus-within {
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 1px var(--color-border-focus);
+}
+
+.iconButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s, color 0.2s;
+    flex-shrink: 0;
+}
+
+.iconButton:hover {
+    background-color: var(--color-bg-gray);
+    color: var(--color-text-main);
+}
+
+.selectWrapper {
+    display: flex;
+    align-items: center;
+}
+
+.modelSelect {
+    appearance: none;
+    background-color: transparent;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    padding: 0.25rem 1.25rem 0.25rem 0.5rem;
+    outline: none;
+}
+
+.modelSelect:hover {
+    color: var(--color-text-main);
+}
+
+.selectContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.selectIcon {
+    position: absolute;
+    right: 0;
+    pointer-events: none;
+    color: var(--color-text-muted);
+}
+
+.divider {
+    width: 1px;
+    height: 20px;
+    background-color: var(--color-border);
+    margin: 0 0.25rem;
+}
+
+.input {
+    flex: 1;
+    border: none;
+    background-color: transparent;
+    font-size: 0.875rem;
+    color: var(--color-text-main);
+    outline: none;
+    padding: 0.5rem;
+    resize: none;
+    max-height: 120px;
+    font-family: inherit;
+}
+
+.input::placeholder {
+    color: var(--color-text-muted);
+}
+
+.sendButton {
+    background-color: var(--color-primary);
+    color: var(--color-text-white);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.sendButton:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+}
+
+.sendButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: var(--color-text-muted);
+}

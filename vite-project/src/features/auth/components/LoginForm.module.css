@@ -1,0 +1,34 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+.title {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    color: var(--color-text-main);
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.forgotPassword {
+    display: block;
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-primary);
+    margin-top: 1rem;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.forgotPassword:hover {
+    text-decoration: underline;
+}

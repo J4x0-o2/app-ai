@@ -1,0 +1,138 @@
+.sidebar {
+    width: 260px;
+    height: calc(100vh - 60px);
+    /* Minus header */
+    background-color: var(--color-bg-sidebar);
+    color: var(--color-text-white);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease-in-out, width 0.3s;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-bg-sidebar-hover);
+}
+
+.collapsed {
+    transform: translateX(-100%);
+    position: absolute;
+    z-index: 20;
+}
+
+@media (min-width: 768px) {
+    .collapsed {
+        transform: none;
+        width: 0;
+        overflow: hidden;
+    }
+}
+
+.topActions {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Base styles for sidebar buttons to look good on dark theme */
+.actionButton {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background-color: transparent;
+    color: var(--color-text-white);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    width: 100%;
+    text-align: left;
+}
+
+.newChatButton {
+    background-color: var(--color-primary-hover);
+    border-color: transparent;
+}
+
+.actionButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.historyArea {
+    flex: 1;
+    padding: 0 1rem 1rem 1rem;
+    overflow-y: auto;
+}
+
+.historyTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.historyGroup {
+    margin-bottom: 1.5rem;
+}
+
+.historyItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: var(--radius-md);
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.historyItem:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.historyItemIcon {
+    margin-top: 0.125rem;
+    opacity: 0.7;
+}
+
+.historyContent {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.historyItemTitle {
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.historyItemDate {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.25rem;
+}
+
+/* Custom Scrollbar for Sidebar */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
