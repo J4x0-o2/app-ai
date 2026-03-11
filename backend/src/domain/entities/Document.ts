@@ -1,11 +1,15 @@
 export class Document {
     constructor(
         public readonly id: string,
-        public filename: string,
-        public fileType: string,
-        public sizeBytes: number,
-        public uploadedByUserId: string,
-        public uploadedAt: Date,
-        public urlOrPath: string
+        public name: string,
+        public type: string,
+        public size: number,
+        public storagePath: string,
+        public uploadedBy: string,
+        public isActive: boolean = true,
+        public createdAt: Date = new Date(),
+        public updatedAt: Date = new Date(),
+        public deletedAt: Date | null = null,
+        public deletedBy: string | null = null
     ) { }
 }

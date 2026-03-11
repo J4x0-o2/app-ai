@@ -1,46 +1,115 @@
 import { FastifyInstance, FastifyPluginAsync } from 'fastify';
+import multipart from '@fastify/multipart';
 import prisma from '../../infrastructure/database/prismaClient';
+
 import { AuthController } from '../controllers/AuthController';
 import { UserController } from '../controllers/UserController';
-import { DocumentController } from '../controllers/DocumentController';
 import { ChatController } from '../controllers/ChatController';
+import { SendPromptRequest } from '../../application/dto/ChatDTO';
+import { CreateUserRequest } from '../../application/dto/UserDTO';
 
-import { MockUserRepository } from '../../infrastructure/repositories/MockUserRepository';
-import { MockDocumentRepository } from '../../infrastructure/repositories/MockDocumentRepository';
-import { MockConversationRepository } from '../../infrastructure/repositories/MockConversationRepository';
+import { PrismaUserRepository } from '../../infrastructure/repositories/PrismaUserRepository';
+import { PrismaDocumentRepository } from '../../infrastructure/repositories/PrismaDocumentRepository';
+import { PrismaConversationRepository } from '../../infrastructure/repositories/PrismaConversationRepository';
 import { MockLangChainService } from '../../infrastructure/langchain/MockLangChainService';
+import { FileStorageService } from '../../infrastructure/storage/FileStorageService';
 
 import { AuthenticateUser } from '../../application/useCases/AuthenticateUser';
 import { CreateUser } from '../../application/useCases/CreateUser';
 import { DeleteUser } from '../../application/useCases/DeleteUser';
 import { UpdateProfilePhoto } from '../../application/useCases/UpdateProfilePhoto';
-import { UploadDocument } from '../../application/useCases/UploadDocument';
-import { DeleteDocument } from '../../application/useCases/DeleteDocument';
 import { SendPromptToAI } from '../../application/useCases/SendPromptToAI';
 import { GetConversationHistory } from '../../application/useCases/GetConversationHistory';
 
-export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
-    const userRepository = new MockUserRepository();
-    const documentRepository = new MockDocumentRepository();
-    const conversationRepository = new MockConversationRepository();
-    const langChainService = new MockLangChainService();
+// Nuevo DMS Use Cases & Controllers
+import { UploadDocumentUseCase } from '../../application/use-cases/documents/UploadDocumentUseCase';
+import { ListDocumentsUseCase } from '../../application/use-cases/documents/ListDocumentsUseCase';
+import { DeleteDocumentUseCase } from '../../application/use-cases/documents/DeleteDocumentUseCase';
+import { DownloadDocumentUseCase } from '../../application/use-cases/documents/DownloadDocumentUseCase';
 
-    const authenticateUser = new AuthenticateUser(userRepository);
+import { UploadDocumentController } from '../controllers/documents/UploadDocumentController';
+import { ListDocumentsController } from '../controllers/documents/ListDocumentsController';
+import { DeleteDocumentController } from '../controllers/documents/DeleteDocumentController';
+import { DownloadDocumentController } from '../controllers/documents/DownloadDocumentController';
+
+// Nuevo JWT Auth System
+import { PrismaAuthRepository } from '../../infrastructure/repositories/PrismaAuthRepository';
+import { PasswordHasher } from '../../infrastructure/security/PasswordHasher';
+import { JwtService } from '../../infrastructure/security/JwtService';
+import { DatabaseAuthProvider } from '../../infrastructure/auth/DatabaseAuthProvider';
+import { LoginUserUseCase } from '../../application/useCases/auth/LoginUserUseCase';
+import { LoginController } from '../controllers/auth/LoginController';
+import { AuthMiddleware } from '../middlewares/AuthMiddleware';
+import { GetUserRolesUseCase } from '../../application/auth/GetUserRolesUseCase';
+import { PrismaRoleRepository } from '../../infrastructure/repositories/PrismaRoleRepository';
+import { PERMISSIONS } from '../../application/auth/permissions';
+import { RoleGuard } from '../middlewares/RoleGuard';
+
+export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
+    // Registramos plugin multipart
+    await server.register(multipart, {
+        limits: {
+            fileSize: 10 * 1024 * 1024, // 10MB
+        }
+    });
+
+    // ======================================
+    // Repositories & Services
+    // ======================================
+    const userRepository = new PrismaUserRepository();
+    const documentRepository = new PrismaDocumentRepository();
+    const conversationRepository = new PrismaConversationRepository();
+    const authRepository = new PrismaAuthRepository();
+    const langChainService = new MockLangChainService();
+    const fileStorageService = new FileStorageService();
+
+    // ======================================
+    // Security Services & Middleware
+    // ======================================
+    const passwordHasher = new PasswordHasher();
+    const jwtService = new JwtService();
+    const getUserRolesUseCase = new GetUserRolesUseCase(new PrismaRoleRepository()); // Bloque 2 Use case
+    const authMiddleware = new AuthMiddleware(jwtService, getUserRolesUseCase);
+
+    // ======================================
+    // Use Cases & Providers
+    // ======================================
+    const databaseAuthProvider = new DatabaseAuthProvider(authRepository, passwordHasher, jwtService);
+
+    const authenticateUser = new AuthenticateUser(userRepository); // Preservado para no romper clean architecture
+    const loginUserUseCase = new LoginUserUseCase(databaseAuthProvider); // Modificado para inyectar AuthProvider en lugar de 3 dependencias
+
     const createUser = new CreateUser(userRepository);
     const deleteUser = new DeleteUser(userRepository);
     const updateProfilePhoto = new UpdateProfilePhoto(userRepository);
 
-    const uploadDocument = new UploadDocument(documentRepository);
-    const deleteDoc = new DeleteDocument(documentRepository);
+    // Document Management Use Cases
+    const uploadDocumentUseCase = new UploadDocumentUseCase(documentRepository, fileStorageService);
+    const listDocumentsUseCase = new ListDocumentsUseCase(documentRepository);
+    const deleteDocumentUseCase = new DeleteDocumentUseCase(documentRepository);
+    const downloadDocumentUseCase = new DownloadDocumentUseCase(documentRepository, fileStorageService);
 
     const sendPromptToAI = new SendPromptToAI(conversationRepository, langChainService);
     const getConversationHistory = new GetConversationHistory(conversationRepository);
 
-    const authController = new AuthController(authenticateUser);
+    // ======================================
+    // Controllers
+    // ======================================
+    const authController = new AuthController(authenticateUser); // Antiguo, mantenido si se usa
+    const loginController = new LoginController(loginUserUseCase); // Nuevo controller
+
     const userController = new UserController(createUser, deleteUser, updateProfilePhoto);
-    const documentController = new DocumentController(uploadDocument, deleteDoc);
     const chatController = new ChatController(sendPromptToAI, getConversationHistory);
 
+    // Document Management Controllers
+    const uploadDocumentController = new UploadDocumentController(uploadDocumentUseCase);
+    const listDocumentsController = new ListDocumentsController(listDocumentsUseCase);
+    const deleteDocumentController = new DeleteDocumentController(deleteDocumentUseCase);
+    const downloadDocumentController = new DownloadDocumentController(downloadDocumentUseCase);
+
+    // ======================================
+    // Routes
+    // ======================================
     server.get('/health/db', async (request, reply) => {
         try {
             await prisma.$queryRaw`SELECT 1`;
@@ -51,15 +120,22 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
         }
     });
 
-    server.post('/api/auth/login', authController.login.bind(authController));
+    // API Pública
+    server.post('/api/auth/login', loginController.login.bind(loginController));
+    
+    // Rutas protegidas (Users)
+    // Crear usuario requiere permit de CREATE_USER
+    server.post<{ Body: CreateUserRequest }>('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.create.bind(userController));
+    server.delete<{ Params: { id: string } }>('/api/users/:id', { preHandler: [authMiddleware.handle] }, userController.delete.bind(userController));
+    server.patch<{ Params: { id: string }, Body: { photoUrl: string } }>('/api/users/:id/photo', { preHandler: [authMiddleware.handle] }, userController.updatePhoto.bind(userController));
 
-    server.post('/api/users', userController.create.bind(userController));
-    server.delete('/api/users/:id', userController.delete.bind(userController));
-    server.patch('/api/users/:id/photo', userController.updatePhoto.bind(userController));
+    // Rutas protegidas (Documents)
+    server.post('/api/documents/upload', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.UPLOAD_DOCUMENT)] }, uploadDocumentController.upload.bind(uploadDocumentController));
+    server.get('/api/documents', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.LIST_DOCUMENTS)] }, listDocumentsController.list.bind(listDocumentsController));
+    server.get<{ Params: { id: string } }>('/api/documents/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.DOWNLOAD_DOCUMENT)] }, downloadDocumentController.download.bind(downloadDocumentController));
+    server.delete<{ Params: { id: string } }>('/api/documents/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.DELETE_DOCUMENT)] }, deleteDocumentController.delete.bind(deleteDocumentController));
 
-    server.post('/api/documents', documentController.upload.bind(documentController));
-    server.delete('/api/documents/:id', documentController.delete.bind(documentController));
-
-    server.post('/api/chat', chatController.sendPrompt.bind(chatController));
-    server.get('/api/chat/:conversationId/history', chatController.getHistory.bind(chatController));
+    // Rutas protegidas (Chat / Conversations)
+    server.post<{ Body: SendPromptRequest }>('/api/chat', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.sendPrompt.bind(chatController));
+    server.get<{ Params: { conversationId: string }, Querystring: { userId: string } }>('/api/chat/:conversationId/history', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.getHistory.bind(chatController));
 };
