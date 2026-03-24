@@ -11,17 +11,11 @@ export const DashboardLayout: React.FC = () => {
         setIsSidebarOpen((prev) => !prev);
     };
 
-    const handleUploadClick = () => {
-        // This could open a generic modal via context or local state
-        // We'll wire it later to the global/shared feature component
-        console.log("Open upload modal");
-    };
-
     return (
         <div className={styles.layout}>
             <Header onMenuToggle={toggleSidebar} showMenuButton={true} />
             <div className={styles.mainArea}>
-                <Sidebar isOpen={isSidebarOpen} onUploadClick={handleUploadClick} />
+                <Sidebar isOpen={isSidebarOpen} />
                 <main className={styles.content}>
                     <Outlet />
                 </main>

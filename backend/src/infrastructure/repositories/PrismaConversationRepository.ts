@@ -24,21 +24,36 @@ export class PrismaConversationRepository implements ConversationRepository {
 
     async findByUserId(userId: string): Promise<Conversation[]> {
         const convs = await prisma.conversations.findMany({
-            where: { user_id: userId }
+            where: { user_id: userId },
+            include: {
+                messages: {
+                    where: { sender_role: 'user' },
+                    orderBy: { created_at: 'asc' },
+                    take: 1,
+                },
+            },
+            orderBy: { created_at: 'desc' },
         });
 
-        // Normally we don't load all prompts for list, but if required by domain:
-        const results: Conversation[] = [];
-        for (const conv of convs) {
-            results.push(new Conversation(
+        return convs.map(conv => {
+            const firstMsg = conv.messages[0];
+            const derivedTitle = firstMsg
+                ? firstMsg.content.slice(0, 60) + (firstMsg.content.length > 60 ? '…' : '')
+                : 'Nueva conversación';
+            return new Conversation(
                 conv.id,
                 conv.user_id,
                 conv.created_at || new Date(),
-                [] // Keeping prompts empty or lazy loaded based on usage
-            ));
-        }
+                [],
+                conv.title || derivedTitle
+            );
+        });
+    }
 
-        return results;
+    async deleteById(id: string, userId: string): Promise<void> {
+        await prisma.conversations.delete({
+            where: { id, user_id: userId },
+        });
     }
 
     async saveConversation(conversation: Conversation): Promise<void> {
@@ -61,9 +76,12 @@ export class PrismaConversationRepository implements ConversationRepository {
     }
 
     async savePrompt(prompt: Prompt): Promise<void> {
-        // We use 'messages' to store both prompt and response
-        await prisma.messages.create({
-            data: {
+        // upsert evita el error de duplicate key cuando savePrompt
+        // se llama dos veces con el mismo prompt (antes y después de la respuesta IA)
+        await prisma.messages.upsert({
+            where: { id: prompt.id },
+            update: { content: prompt.content },
+            create: {
                 id: prompt.id,
                 conversation_id: prompt.conversationId,
                 sender_role: 'user',
@@ -73,8 +91,10 @@ export class PrismaConversationRepository implements ConversationRepository {
         });
 
         if (prompt.response) {
-            await prisma.messages.create({
-                data: {
+            await prisma.messages.upsert({
+                where: { id: prompt.response.id },
+                update: { content: prompt.response.content },
+                create: {
                     id: prompt.response.id,
                     conversation_id: prompt.conversationId,
                     sender_role: 'assistant',

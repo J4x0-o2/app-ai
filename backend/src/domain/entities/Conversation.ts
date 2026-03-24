@@ -5,6 +5,7 @@ export class Conversation {
         public readonly id: string,
         public userId: string,
         public startedAt: Date,
-        public prompts: Prompt[] = []
+        public prompts: Prompt[] = [],
+        public title?: string
     ) { }
 }

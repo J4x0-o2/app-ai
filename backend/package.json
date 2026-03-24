@@ -10,11 +10,19 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@fastify/cors": "^11.2.0",
     "@fastify/multipart": "^9.4.0",
+    "@langchain/community": "^1.1.23",
+    "@langchain/core": "^1.1.32",
+    "@langchain/google-genai": "^2.1.25",
+    "@langchain/textsplitters": "^1.0.1",
     "@prisma/client": "^6.4.1",
     "bcrypt": "^6.0.0",
     "fastify": "^5.8.2",
     "jsonwebtoken": "^9.0.3",
+    "langchain": "^1.2.31",
+    "pdf-parse": "^1.1.1",
+    "pgvector": "^0.2.1",
     "prisma": "^6.4.1",
     "uuid": "^13.0.0"
   },
@@ -22,6 +30,7 @@
     "@types/bcrypt": "^6.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.4.0",
+    "@types/pdf-parse": "^1.1.5",
     "@types/uuid": "^10.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
