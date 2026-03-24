@@ -7,4 +7,5 @@ export interface ConversationRepository {
     saveConversation(conversation: Conversation): Promise<void>;
     savePrompt(prompt: Prompt): Promise<void>;
     getPromptsByConversationId(conversationId: string): Promise<Prompt[]>;
+    deleteById(id: string, userId: string): Promise<void>;
 }

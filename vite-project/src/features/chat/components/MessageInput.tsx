@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Send, ChevronDown } from 'lucide-react';
+import { Send, ChevronDown } from 'lucide-react';
 import styles from './MessageInput.module.css';
 
 interface MessageInputProps {
     onSendMessage: (message: string, model: string) => void;
-    onAttachClick: () => void;
+    disabled?: boolean;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onAttachClick }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, disabled = false }) => {
     const [message, setMessage] = useState('');
-    const [model, setModel] = useState('GPT-4');
+    const [model, setModel] = useState('gemini-2.5-flash');
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Auto-resize textarea
@@ -21,11 +21,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onAtt
     }, [message]);
 
     const handleSend = () => {
-        if (message.trim()) {
+        if (message.trim() && !disabled) {
             onSendMessage(message.trim(), model);
             setMessage('');
             if (textareaRef.current) {
-                textareaRef.current.style.height = 'auto'; // Reset size
+                textareaRef.current.style.height = 'auto';
             }
         }
     };
@@ -39,24 +39,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onAtt
 
     return (
         <div className={styles.inputWrapper}>
-            <button
-                type="button"
-                className={styles.iconButton}
-                onClick={onAttachClick}
-                title="Adjuntar"
-            >
-                <Plus size={20} />
-            </button>
-
             <div className={styles.selectContainer}>
                 <select
                     className={styles.modelSelect}
                     value={model}
                     onChange={(e) => setModel(e.target.value)}
                 >
-                    <option value="GPT-4">GPT-4</option>
-                    <option value="GPT-3.5">GPT-3.5</option>
-                    <option value="Claude-3">Claude-3</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                 </select>
                 <ChevronDown size={14} className={styles.selectIcon} />
             </div>
@@ -76,7 +66,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onAtt
             <button
                 type="button"
                 className={styles.sendButton}
-                disabled={!message.trim()}
+                disabled={!message.trim() || disabled}
                 onClick={handleSend}
                 aria-label="Enviar mensaje"
             >

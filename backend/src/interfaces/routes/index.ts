@@ -11,7 +11,6 @@ import { CreateUserRequest } from '../../application/dto/UserDTO';
 import { PrismaUserRepository } from '../../infrastructure/repositories/PrismaUserRepository';
 import { PrismaDocumentRepository } from '../../infrastructure/repositories/PrismaDocumentRepository';
 import { PrismaConversationRepository } from '../../infrastructure/repositories/PrismaConversationRepository';
-import { MockLangChainService } from '../../infrastructure/langchain/MockLangChainService';
 import { FileStorageService } from '../../infrastructure/storage/FileStorageService';
 
 import { AuthenticateUser } from '../../application/useCases/AuthenticateUser';
@@ -20,6 +19,8 @@ import { DeleteUser } from '../../application/useCases/DeleteUser';
 import { UpdateProfilePhoto } from '../../application/useCases/UpdateProfilePhoto';
 import { SendPromptToAI } from '../../application/useCases/SendPromptToAI';
 import { GetConversationHistory } from '../../application/useCases/GetConversationHistory';
+import { ListConversationsUseCase } from '../../application/useCases/ListConversationsUseCase';
+import { DeleteConversationUseCase } from '../../application/useCases/DeleteConversationUseCase';
 
 // Nuevo DMS Use Cases & Controllers
 import { UploadDocumentUseCase } from '../../application/use-cases/documents/UploadDocumentUseCase';
@@ -31,6 +32,15 @@ import { UploadDocumentController } from '../controllers/documents/UploadDocumen
 import { ListDocumentsController } from '../controllers/documents/ListDocumentsController';
 import { DeleteDocumentController } from '../controllers/documents/DeleteDocumentController';
 import { DownloadDocumentController } from '../controllers/documents/DownloadDocumentController';
+
+// AI Module
+import { RecursiveChunkingService } from '../../modules/ai/infrastructure/langchain/RecursiveChunkingService';
+import { GeminiEmbeddingService } from '../../modules/ai/infrastructure/langchain/GeminiEmbeddingService';
+import { PGVectorSearchService } from '../../modules/ai/infrastructure/langchain/PGVectorSearchService';
+import { GeminiAIService } from '../../modules/ai/infrastructure/langchain/GeminiAIService';
+import { ProcessDocumentForAIUseCase } from '../../modules/ai/application/usecases/ProcessDocumentForAIUseCase';
+import { AskAIQuestionUseCase } from '../../modules/ai/application/usecases/AskAIQuestionUseCase';
+import { AIController } from '../../modules/ai/interfaces/controllers/AIController';
 
 // Nuevo JWT Auth System
 import { PrismaAuthRepository } from '../../infrastructure/repositories/PrismaAuthRepository';
@@ -60,7 +70,6 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const documentRepository = new PrismaDocumentRepository();
     const conversationRepository = new PrismaConversationRepository();
     const authRepository = new PrismaAuthRepository();
-    const langChainService = new MockLangChainService();
     const fileStorageService = new FileStorageService();
 
     // ======================================
@@ -89,8 +98,19 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const deleteDocumentUseCase = new DeleteDocumentUseCase(documentRepository);
     const downloadDocumentUseCase = new DownloadDocumentUseCase(documentRepository, fileStorageService);
 
-    const sendPromptToAI = new SendPromptToAI(conversationRepository, langChainService);
+    // AI Use Cases (debe ir antes de SendPromptToAI que depende de askAIQuestionUseCase)
+    const aiChunkingService = new RecursiveChunkingService();
+    const aiEmbeddingService = new GeminiEmbeddingService();
+    const aiVectorSearchService = new PGVectorSearchService();
+    const aiServiceInstance = new GeminiAIService();
+
+    const processDocumentUseCase = new ProcessDocumentForAIUseCase(aiChunkingService, aiEmbeddingService);
+    const askAIQuestionUseCase = new AskAIQuestionUseCase(aiEmbeddingService, aiVectorSearchService, aiServiceInstance);
+
+    const sendPromptToAI = new SendPromptToAI(conversationRepository, askAIQuestionUseCase);
     const getConversationHistory = new GetConversationHistory(conversationRepository);
+    const listConversationsUseCase = new ListConversationsUseCase(conversationRepository);
+    const deleteConversationUseCase = new DeleteConversationUseCase(conversationRepository);
 
     // ======================================
     // Controllers
@@ -99,13 +119,15 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const loginController = new LoginController(loginUserUseCase); // Nuevo controller
 
     const userController = new UserController(createUser, deleteUser, updateProfilePhoto);
-    const chatController = new ChatController(sendPromptToAI, getConversationHistory);
+    const chatController = new ChatController(sendPromptToAI, getConversationHistory, listConversationsUseCase, deleteConversationUseCase);
 
     // Document Management Controllers
     const uploadDocumentController = new UploadDocumentController(uploadDocumentUseCase);
     const listDocumentsController = new ListDocumentsController(listDocumentsUseCase);
     const deleteDocumentController = new DeleteDocumentController(deleteDocumentUseCase);
     const downloadDocumentController = new DownloadDocumentController(downloadDocumentUseCase);
+
+    const aiController = new AIController(processDocumentUseCase, askAIQuestionUseCase);
 
     // ======================================
     // Routes
@@ -138,4 +160,10 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     // Rutas protegidas (Chat / Conversations)
     server.post<{ Body: SendPromptRequest }>('/api/chat', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.sendPrompt.bind(chatController));
     server.get<{ Params: { conversationId: string }, Querystring: { userId: string } }>('/api/chat/:conversationId/history', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.getHistory.bind(chatController));
+    server.get('/api/conversations', { preHandler: [authMiddleware.handle] }, chatController.list.bind(chatController));
+    server.delete<{ Params: { id: string } }>('/api/conversations/:id', { preHandler: [authMiddleware.handle] }, chatController.delete.bind(chatController));
+
+    // AI Module Routes (RAG)
+    server.post<{ Body: { documentId: string } }>('/ai/process-document', { preHandler: [authMiddleware.handle] }, aiController.processDocument.bind(aiController));
+    server.post<{ Body: { question: string } }>('/ai/ask', { preHandler: [authMiddleware.handle] }, aiController.ask.bind(aiController));
 };

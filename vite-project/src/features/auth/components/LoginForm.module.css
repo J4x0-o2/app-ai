@@ -19,6 +19,13 @@
     gap: 1.25rem;
 }
 
+.error {
+    font-size: 0.875rem;
+    color: var(--color-danger, #ef4444);
+    text-align: center;
+    margin: 0;
+}
+
 .forgotPassword {
     display: block;
     text-align: center;

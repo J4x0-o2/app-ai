@@ -27,4 +27,8 @@ export class MockConversationRepository implements ConversationRepository {
             .filter(p => p.conversationId === conversationId)
             .sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime());
     }
+
+    async deleteById(id: string, _userId: string): Promise<void> {
+        this.conversations.delete(id);
+    }
 }

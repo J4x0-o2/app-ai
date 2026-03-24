@@ -1,67 +1,125 @@
-import React from 'react';
-import { Plus, Upload, MessageSquare } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Upload, Search, Trash2, MessageSquare } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { chatService, ConversationSummary } from '../../features/chat/services/chatService';
+import { useAuth } from '../../store/authContext';
 import styles from './Sidebar.module.css';
 
 interface SidebarProps {
     isOpen: boolean;
-    onUploadClick: () => void;
 }
 
-// Mock History Data
-const HISTORY_DATA = [
-    {
-        group: 'Hoy',
-        items: [
-            { id: '1', title: 'Análisis de datos financieros' },
-            { id: '2', title: 'Resumen de contrato' }
-        ]
-    },
-    {
-        group: 'Ayer',
-        items: [
-            { id: '3', title: 'Traducción de documento' },
-            { id: '4', title: 'Consulta sobre normativas' }
-        ]
-    },
-    {
-        group: 'Hace 3 días',
-        items: [
-            { id: '5', title: 'Revisión de informe Q3' }
-        ]
-    }
-];
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onUploadClick }) => {
+    const [conversations, setConversations] = useState<ConversationSummary[]>([]);
+    const [search, setSearch] = useState('');
+    const [activeId, setActiveId] = useState<string | null>(null);
+
+    const loadConversations = useCallback(async () => {
+        if (!user) return;
+        try {
+            const data = await chatService.getConversations();
+            setConversations(data);
+        } catch {
+            // Silencioso — el sidebar no debe bloquear si el endpoint falla
+        }
+    }, [user]);
+
+    useEffect(() => {
+        loadConversations();
+    }, [loadConversations]);
+
+    // Refresca la lista cuando ChatArea crea una conversación nueva
+    useEffect(() => {
+        const handler = () => loadConversations();
+        window.addEventListener('conversation-created', handler);
+        return () => window.removeEventListener('conversation-created', handler);
+    }, [loadConversations]);
+
+    const handleNewChat = () => {
+        setActiveId(null);
+        navigate('/chat', { state: { newChat: Date.now() } });
+    };
+
+    const handleOpenConversation = (conv: ConversationSummary) => {
+        setActiveId(conv.id);
+        navigate('/chat', { state: { loadConversation: conv.id } });
+    };
+
+    const handleDelete = async (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        try {
+            await chatService.deleteConversation(id);
+            setConversations(prev => prev.filter(c => c.id !== id));
+            if (activeId === id) {
+                setActiveId(null);
+                navigate('/chat', { state: { newChat: Date.now() } });
+            }
+        } catch {
+            // ignorar — podría mostrarse un toast en el futuro
+        }
+    };
+
+    const filtered = conversations.filter(c =>
+        c.title.toLowerCase().includes(search.toLowerCase())
+    );
+
     return (
         <aside className={`${styles.sidebar} ${!isOpen ? styles.collapsed : ''}`}>
             <div className={styles.topActions}>
-                <Link to="/chat" className={`${styles.actionButton} ${styles.newChatButton}`}>
+                <button className={`${styles.actionButton} ${styles.newChatButton}`} onClick={handleNewChat}>
                     <Plus size={18} />
                     Nuevo Chat
-                </Link>
-                <button className={styles.actionButton} onClick={onUploadClick}>
+                </button>
+                <Link to="/profile" className={styles.actionButton}>
                     <Upload size={18} />
                     Subir Documentos
-                </button>
+                </Link>
             </div>
 
             <div className={styles.historyArea}>
                 <div className={styles.historyTitle}>Historial</div>
 
-                {HISTORY_DATA.map((group) => (
-                    <div key={group.group} className={styles.historyGroup}>
-                        {group.items.map((item) => (
-                            <Link to={`/chat/${item.id}`} key={item.id} className={styles.historyItem}>
-                                <MessageSquare size={16} className={styles.historyItemIcon} />
-                                <div className={styles.historyContent}>
-                                    <span className={styles.historyItemTitle}>{item.title}</span>
-                                    <span className={styles.historyItemDate}>{group.group}</span>
-                                </div>
-                            </Link>
+                <div className={styles.searchWrapper}>
+                    <Search size={14} className={styles.searchIcon} />
+                    <input
+                        type="text"
+                        className={styles.searchInput}
+                        placeholder="Buscar conversación..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                    />
+                </div>
+
+                {filtered.length === 0 ? (
+                    <p className={styles.emptyHistory}>
+                        {search ? 'Sin resultados' : 'No hay conversaciones aún'}
+                    </p>
+                ) : (
+                    <ul className={styles.historyList}>
+                        {filtered.map(conv => (
+                            <li key={conv.id}>
+                                <button
+                                    className={`${styles.historyItem} ${activeId === conv.id ? styles.historyItemActive : ''}`}
+                                    onClick={() => handleOpenConversation(conv)}
+                                    title={conv.id}
+                                >
+                                    <MessageSquare size={14} className={styles.historyItemIcon} />
+                                    <span className={styles.historyItemTitle}>{conv.title}</span>
+                                    <button
+                                        className={styles.historyDeleteBtn}
+                                        onClick={e => handleDelete(e, conv.id)}
+                                        title="Eliminar conversación"
+                                    >
+                                        <Trash2 size={13} />
+                                    </button>
+                                </button>
+                            </li>
                         ))}
-                    </div>
-                ))}
+                    </ul>
+                )}
             </div>
         </aside>
     );
