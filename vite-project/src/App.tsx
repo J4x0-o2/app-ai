@@ -6,6 +6,8 @@ import { DashboardLayout } from './layouts/DashboardLayout';
 import { LoginPage } from './pages/LoginPage';
 import { ChatPage } from './pages/ChatPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { DocumentsPage } from './pages/DocumentsPage';
+import { UsersPage } from './pages/UsersPage';
 import './index.css';
 
 function App() {
@@ -23,6 +25,8 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/chat/:chatId" element={<ChatPage />} />
+              <Route path="/documents" element={<DocumentsPage />} />
+              <Route path="/users" element={<UsersPage />} />
             </Route>
             <Route path="/profile" element={<ProfilePage />} />
           </Route>

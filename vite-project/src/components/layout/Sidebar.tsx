@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Upload, Search, Trash2, MessageSquare } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Search, Trash2, MessageSquare, FileText, Users } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { chatService, ConversationSummary } from '../../features/chat/services/chatService';
 import { useAuth } from '../../store/authContext';
 import styles from './Sidebar.module.css';
@@ -73,10 +73,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     <Plus size={18} />
                     Nuevo Chat
                 </button>
-                <Link to="/profile" className={styles.actionButton}>
-                    <Upload size={18} />
-                    Subir Documentos
-                </Link>
+                <NavLink
+                    to="/documents"
+                    className={({ isActive }) =>
+                        `${styles.actionButton} ${isActive ? styles.navLinkActive : ''}`
+                    }
+                >
+                    <FileText size={18} />
+                    Documentos
+                </NavLink>
+                {user?.role === 'ADMIN' && (
+                    <NavLink
+                        to="/users"
+                        className={({ isActive }) =>
+                            `${styles.actionButton} ${isActive ? styles.navLinkActive : ''}`
+                        }
+                    >
+                        <Users size={18} />
+                        Usuarios
+                    </NavLink>
+                )}
             </div>
 
             <div className={styles.historyArea}>

@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { SendPromptToAI } from '../../application/useCases/SendPromptToAI';
-import { GetConversationHistory } from '../../application/useCases/GetConversationHistory';
-import { ListConversationsUseCase } from '../../application/useCases/ListConversationsUseCase';
-import { DeleteConversationUseCase } from '../../application/useCases/DeleteConversationUseCase';
+import { SendPromptToAI } from '../../application/use-cases/chat/SendPromptToAI';
+import { GetConversationHistory } from '../../application/use-cases/chat/GetConversationHistory';
+import { ListConversationsUseCase } from '../../application/use-cases/chat/ListConversationsUseCase';
+import { DeleteConversationUseCase } from '../../application/use-cases/chat/DeleteConversationUseCase';
 import { SendPromptRequest } from '../../application/dto/ChatDTO';
 import { ApplicationError } from '../../shared/errors/errors';
 

@@ -110,3 +110,10 @@
     color: var(--color-border);
     margin-bottom: 0.5rem;
 }
+
+.photoError {
+    text-align: center;
+    font-size: 0.875rem;
+    color: var(--color-danger);
+    margin-top: 0.5rem;
+}

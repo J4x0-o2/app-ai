@@ -13,6 +13,7 @@ interface LoginResponse {
         email: string;
         role: string;
         permissions: string[];
+        profilePhotoUrl?: string;
     };
 }
 

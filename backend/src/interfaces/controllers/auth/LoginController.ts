@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { LoginUserUseCase } from '../../../application/useCases/auth/LoginUserUseCase';
+import { LoginUserUseCase } from '../../../application/use-cases/auth/LoginUserUseCase';
 import { LoginRequest } from '../../../application/dto/AuthDTO';
 import { ApplicationError } from '../../../shared/errors/errors';
 

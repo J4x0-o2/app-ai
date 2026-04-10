@@ -2,7 +2,6 @@ import { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import multipart from '@fastify/multipart';
 import prisma from '../../infrastructure/database/prismaClient';
 
-import { AuthController } from '../controllers/AuthController';
 import { UserController } from '../controllers/UserController';
 import { ChatController } from '../controllers/ChatController';
 import { SendPromptRequest } from '../../application/dto/ChatDTO';
@@ -13,16 +12,16 @@ import { PrismaDocumentRepository } from '../../infrastructure/repositories/Pris
 import { PrismaConversationRepository } from '../../infrastructure/repositories/PrismaConversationRepository';
 import { FileStorageService } from '../../infrastructure/storage/FileStorageService';
 
-import { AuthenticateUser } from '../../application/useCases/AuthenticateUser';
-import { CreateUser } from '../../application/useCases/CreateUser';
-import { DeleteUser } from '../../application/useCases/DeleteUser';
-import { UpdateProfilePhoto } from '../../application/useCases/UpdateProfilePhoto';
-import { SendPromptToAI } from '../../application/useCases/SendPromptToAI';
-import { GetConversationHistory } from '../../application/useCases/GetConversationHistory';
-import { ListConversationsUseCase } from '../../application/useCases/ListConversationsUseCase';
-import { DeleteConversationUseCase } from '../../application/useCases/DeleteConversationUseCase';
+import { CreateUser } from '../../application/use-cases/users/CreateUser';
+import { DeleteUser } from '../../application/use-cases/users/DeleteUser';
+import { UpdateProfilePhoto } from '../../application/use-cases/users/UpdateProfilePhoto';
+import { ListUsersUseCase } from '../../application/use-cases/users/ListUsersUseCase';
+import { SendPromptToAI } from '../../application/use-cases/chat/SendPromptToAI';
+import { GetConversationHistory } from '../../application/use-cases/chat/GetConversationHistory';
+import { ListConversationsUseCase } from '../../application/use-cases/chat/ListConversationsUseCase';
+import { DeleteConversationUseCase } from '../../application/use-cases/chat/DeleteConversationUseCase';
 
-// Nuevo DMS Use Cases & Controllers
+// DMS Use Cases & Controllers
 import { UploadDocumentUseCase } from '../../application/use-cases/documents/UploadDocumentUseCase';
 import { ListDocumentsUseCase } from '../../application/use-cases/documents/ListDocumentsUseCase';
 import { DeleteDocumentUseCase } from '../../application/use-cases/documents/DeleteDocumentUseCase';
@@ -42,12 +41,12 @@ import { ProcessDocumentForAIUseCase } from '../../modules/ai/application/usecas
 import { AskAIQuestionUseCase } from '../../modules/ai/application/usecases/AskAIQuestionUseCase';
 import { AIController } from '../../modules/ai/interfaces/controllers/AIController';
 
-// Nuevo JWT Auth System
+// Auth System
 import { PrismaAuthRepository } from '../../infrastructure/repositories/PrismaAuthRepository';
 import { PasswordHasher } from '../../infrastructure/security/PasswordHasher';
 import { JwtService } from '../../infrastructure/security/JwtService';
 import { DatabaseAuthProvider } from '../../infrastructure/auth/DatabaseAuthProvider';
-import { LoginUserUseCase } from '../../application/useCases/auth/LoginUserUseCase';
+import { LoginUserUseCase } from '../../application/use-cases/auth/LoginUserUseCase';
 import { LoginController } from '../controllers/auth/LoginController';
 import { AuthMiddleware } from '../middlewares/AuthMiddleware';
 import { GetUserRolesUseCase } from '../../application/auth/GetUserRolesUseCase';
@@ -84,13 +83,12 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     // Use Cases & Providers
     // ======================================
     const databaseAuthProvider = new DatabaseAuthProvider(authRepository, passwordHasher, jwtService);
-
-    const authenticateUser = new AuthenticateUser(userRepository); // Preservado para no romper clean architecture
-    const loginUserUseCase = new LoginUserUseCase(databaseAuthProvider); // Modificado para inyectar AuthProvider en lugar de 3 dependencias
+    const loginUserUseCase = new LoginUserUseCase(databaseAuthProvider);
 
     const createUser = new CreateUser(userRepository);
     const deleteUser = new DeleteUser(userRepository);
     const updateProfilePhoto = new UpdateProfilePhoto(userRepository);
+    const listUsers = new ListUsersUseCase(userRepository);
 
     // Document Management Use Cases
     const uploadDocumentUseCase = new UploadDocumentUseCase(documentRepository, fileStorageService);
@@ -115,10 +113,9 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     // ======================================
     // Controllers
     // ======================================
-    const authController = new AuthController(authenticateUser); // Antiguo, mantenido si se usa
-    const loginController = new LoginController(loginUserUseCase); // Nuevo controller
+    const loginController = new LoginController(loginUserUseCase);
 
-    const userController = new UserController(createUser, deleteUser, updateProfilePhoto);
+    const userController = new UserController(createUser, deleteUser, updateProfilePhoto, listUsers);
     const chatController = new ChatController(sendPromptToAI, getConversationHistory, listConversationsUseCase, deleteConversationUseCase);
 
     // Document Management Controllers
@@ -146,9 +143,9 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     server.post('/api/auth/login', loginController.login.bind(loginController));
     
     // Rutas protegidas (Users)
-    // Crear usuario requiere permit de CREATE_USER
+    server.get('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.list.bind(userController));
     server.post<{ Body: CreateUserRequest }>('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.create.bind(userController));
-    server.delete<{ Params: { id: string } }>('/api/users/:id', { preHandler: [authMiddleware.handle] }, userController.delete.bind(userController));
+    server.delete<{ Params: { id: string } }>('/api/users/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.delete.bind(userController));
     server.patch<{ Params: { id: string }, Body: { photoUrl: string } }>('/api/users/:id/photo', { preHandler: [authMiddleware.handle] }, userController.updatePhoto.bind(userController));
 
     // Rutas protegidas (Documents)
