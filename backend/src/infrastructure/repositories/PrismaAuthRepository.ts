@@ -6,6 +6,7 @@ export interface AuthUserDTO {
     passwordHash: string;
     isActive: boolean;
     roles: string[];
+    profilePhotoUrl?: string;
 }
 
 export interface IAuthRepository {
@@ -35,7 +36,8 @@ export class PrismaAuthRepository implements IAuthRepository {
             email: userRec.email,
             passwordHash: userRec.password_hash,
             isActive: userRec.is_active ?? true,
-            roles: roleNames
+            roles: roleNames,
+            profilePhotoUrl: userRec.profile_image ?? undefined,
         };
     }
 }

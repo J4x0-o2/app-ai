@@ -12,5 +12,6 @@ export interface LoginResponse {
         email: string;
         role: Role;
         permissions: string[];
+        profilePhotoUrl?: string;
     };
 }

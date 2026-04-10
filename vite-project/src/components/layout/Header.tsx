@@ -3,6 +3,7 @@ import { Menu, User, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
 import { DropdownMenu } from '../ui/DropdownMenu';
+import { useAuth } from '../../store/authContext';
 import styles from './Header.module.css';
 
 interface HeaderProps {
@@ -12,17 +13,11 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onMenuToggle, showMenuButton = true }) => {
     const navigate = useNavigate();
-
-    // Mock user for now
-    const userName = "Admin User";
+    const { user, logout } = useAuth();
 
     const handleLogout = () => {
-        // Basic mock logout
+        logout();
         navigate('/login');
-    };
-
-    const handleProfile = () => {
-        navigate('/profile');
     };
 
     return (
@@ -33,7 +28,6 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, showMenuButton = t
                         <Menu size={24} />
                     </button>
                 )}
-                {/* Placeholder Logo */}
                 <Link to="/chat" className={styles.logoArea}>
                     IDS AI CHAT
                 </Link>
@@ -43,21 +37,25 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, showMenuButton = t
                 <DropdownMenu
                     trigger={
                         <div className={styles.userInfo}>
-                            <Avatar name={userName} size="sm" />
+                            <Avatar
+                                name={user?.email ?? ''}
+                                imageUrl={user?.profilePhotoUrl}
+                                size="sm"
+                            />
                         </div>
                     }
                     items={[
                         {
                             label: 'Perfil',
                             icon: <User size={16} />,
-                            onClick: handleProfile
+                            onClick: () => navigate('/profile'),
                         },
                         {
                             label: 'Cerrar Sesión',
                             icon: <LogOut size={16} />,
                             onClick: handleLogout,
-                            danger: true
-                        }
+                            danger: true,
+                        },
                     ]}
                 />
             </div>

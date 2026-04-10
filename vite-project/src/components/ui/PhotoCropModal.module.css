@@ -1,0 +1,116 @@
+.body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.25rem 0;
+}
+
+.loading {
+    height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+}
+
+/* Canvas container */
+.canvasWrapper {
+    position: relative;
+    width: 360px;
+    height: 360px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.canvasWrapper:active {
+    cursor: grabbing;
+}
+
+.canvas {
+    display: block;
+    width: 360px;
+    height: 360px;
+}
+
+/* Circular ring overlay — shows what will be cropped as a circle */
+.cropRing {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-md);
+    box-shadow:
+        0 0 0 9999px rgba(0, 0, 0, 0.45),  /* dark outside the circle */
+        inset 0 0 0 2px rgba(255, 255, 255, 0.7); /* white border inside */
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Hint text */
+.hint {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    margin: 0;
+}
+
+/* Zoom slider row */
+.zoomRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 340px;
+}
+
+.zoomIcon {
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+}
+
+.zoomSlider {
+    flex: 1;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+    height: 4px;
+}
+
+/* Footer buttons */
+.cancelBtn {
+    padding: 0.5rem 1.1rem;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.cancelBtn:hover {
+    background-color: var(--color-bg-gray);
+}
+
+.applyBtn {
+    padding: 0.5rem 1.1rem;
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.applyBtn:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+}
+
+.applyBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

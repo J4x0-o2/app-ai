@@ -3,47 +3,44 @@ import { User } from '../../domain/entities/User';
 import { Role } from '../../shared/types/roles';
 import prisma from '../database/prismaClient';
 
+const toUser = (userRec: any): User => {
+    const roleName = userRec.user_roles?.[0]?.roles?.name as Role || Role.EMPLEADO;
+    return new User(
+        userRec.id,
+        userRec.name || '',
+        userRec.last_name || '',
+        userRec.email,
+        roleName,
+        userRec.created_at || new Date(),
+        'system',
+        userRec.phone || undefined,
+        userRec.cargo || undefined,
+        userRec.profile_image || undefined
+    );
+};
+
+const userInclude = {
+    user_roles: { include: { roles: true } }
+};
+
 export class PrismaUserRepository implements UserRepository {
     async findById(id: string): Promise<User | null> {
-        const userRec = await prisma.users.findUnique({
-            where: { id },
-            include: { user_roles: { include: { roles: true } } }
-        });
-
-        if (!userRec) return null;
-
-        const roleName = userRec.user_roles?.[0]?.roles?.name as Role || Role.EMPLEADO;
-
-        return new User(
-            userRec.id,
-            userRec.name || userRec.username,
-            userRec.email,
-            roleName,
-            userRec.created_at || new Date(),
-            'system', // createdBy not in Prisma schema
-            userRec.profile_image || undefined
-        );
+        const rec = await prisma.users.findUnique({ where: { id }, include: userInclude });
+        return rec ? toUser(rec) : null;
     }
 
     async findByEmail(email: string): Promise<User | null> {
-        const userRec = await prisma.users.findUnique({
-            where: { email },
-            include: { user_roles: { include: { roles: true } } }
+        const rec = await prisma.users.findUnique({ where: { email }, include: userInclude });
+        return rec ? toUser(rec) : null;
+    }
+
+    async findAll(): Promise<User[]> {
+        const recs = await prisma.users.findMany({
+            where: { is_active: true },
+            include: userInclude,
+            orderBy: { created_at: 'desc' },
         });
-
-        if (!userRec) return null;
-
-        const roleName = userRec.user_roles?.[0]?.roles?.name as Role || Role.EMPLEADO;
-
-        return new User(
-            userRec.id,
-            userRec.name || userRec.username,
-            userRec.email,
-            roleName,
-            userRec.created_at || new Date(),
-            'system', 
-            userRec.profile_image || undefined
-        );
+        return recs.map(toUser);
     }
 
     async save(user: User): Promise<void> {
@@ -59,14 +56,15 @@ export class PrismaUserRepository implements UserRepository {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                username: username,
+                last_name: user.lastName,
+                phone: user.phone,
+                cargo: user.cargo,
+                username,
                 password_hash: 'default_password',
                 profile_image: user.profilePhotoUrl,
                 created_at: user.createdAt,
                 user_roles: {
-                    create: {
-                        role_id: roleRec.id
-                    }
+                    create: { role_id: roleRec.id }
                 }
             }
         });
@@ -82,10 +80,11 @@ export class PrismaUserRepository implements UserRepository {
             where: { id: user.id },
             data: {
                 name: user.name,
+                last_name: user.lastName,
+                phone: user.phone,
+                cargo: user.cargo,
                 email: user.email,
                 profile_image: user.profilePhotoUrl,
-                // Update role mapping requires deleting old roles and adding new ones,
-                // to keep it simple we either ignore role update or recreate it.
                 user_roles: {
                     deleteMany: {},
                     create: { role_id: roleRec.id }
@@ -95,6 +94,9 @@ export class PrismaUserRepository implements UserRepository {
     }
 
     async delete(id: string): Promise<void> {
-        await prisma.users.delete({ where: { id } });
+        await prisma.users.update({
+            where: { id },
+            data: { is_active: false }
+        });
     }
 }

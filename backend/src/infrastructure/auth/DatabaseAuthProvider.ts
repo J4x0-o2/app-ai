@@ -45,7 +45,8 @@ export class DatabaseAuthProvider implements AuthProvider {
                 id: user.id,
                 email: user.email,
                 role: user.roles.length > 0 ? (user.roles[0] as any) : 'EMPLEADO',
-                permissions: [] // Default or resolve via AuthorizationService later
+                permissions: [],
+                profilePhotoUrl: user.profilePhotoUrl,
             }
         };
     }

@@ -6,6 +6,7 @@ interface AuthUser {
     email: string;
     role: string;
     permissions: string[];
+    profilePhotoUrl?: string;
 }
 
 interface AuthContextValue {
@@ -13,6 +14,7 @@ interface AuthContextValue {
     isAuthenticated: boolean;
     login: (token: string, user: AuthUser) => void;
     logout: () => void;
+    updateProfilePhoto: (url: string) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -20,9 +22,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
 
-    // Al montar, si hay token guardado intentamos restaurar la sesión.
-    // Por ahora solo verificamos que el token exista; en el módulo 3
-    // agregaremos un endpoint /me para validarlo contra el servidor.
     useEffect(() => {
         const token = tokenStorage.get();
         const savedUser = localStorage.getItem('auth_user');
@@ -48,8 +47,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
     };
 
+    const updateProfilePhoto = (url: string) => {
+        setUser(prev => {
+            if (!prev) return prev;
+            const updated = { ...prev, profilePhotoUrl: url };
+            localStorage.setItem('auth_user', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, updateProfilePhoto }}>
             {children}
         </AuthContext.Provider>
     );
