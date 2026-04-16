@@ -43,3 +43,6 @@ coverage/
 
 # OS generated files
 Thumbs.db
+
+# Claude directories
+.claude/
