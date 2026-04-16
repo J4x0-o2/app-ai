@@ -1,0 +1,895 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AppAi — Diagrama C4 (Modelo C4 de Simon Brown)
+  Formato: draw.io / diagrams.net (mxGraph XML)
+  Abrir en: https://app.diagrams.net  o  VS Code extension "Draw.io Integration"
+
+  PÁGINAS:
+    1 - C4 Nivel 1: Contexto del Sistema
+    2 - C4 Nivel 2: Contenedores
+    3 - C4 Nivel 3: Componentes (Fastify Backend — Clean Architecture)
+    4 - C4 Nivel 3: Componentes (Módulo AI / Pipeline RAG)
+-->
+<mxfile host="app.diagrams.net" version="21.0.0" type="device">
+
+<!-- ================================================================== -->
+<!-- PÁGINA 1 — C4 NIVEL 1: CONTEXTO DEL SISTEMA                        -->
+<!-- ================================================================== -->
+<diagram id="c4_ctx" name="1 - C4 Contexto">
+<mxGraphModel dx="1500" dy="850" grid="0" gridSize="10" guides="1"
+              tooltips="1" connect="1" arrows="1" fold="1" page="1"
+              pageScale="1" pageWidth="1400" pageHeight="750" math="0" shadow="0">
+<root>
+<mxCell id="0" /><mxCell id="1" parent="0" />
+
+<!-- TÍTULO -->
+<mxCell id="ctx_title"
+  value="AppAi — C4 Nivel 1: Contexto del Sistema"
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=18;fontColor=#1a1a2e;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="12" width="1200" height="35" as="geometry" />
+</mxCell>
+
+<mxCell id="ctx_sub"
+  value="¿Cómo encaja AppAi en el mundo? Usuarios y sistemas externos con los que interactúa."
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;fontColor=#666666;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="48" width="1200" height="20" as="geometry" />
+</mxCell>
+
+<!-- LEYENDA -->
+<mxCell id="ctx_leg1"
+  value="Persona (interna)"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#073B6F;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="30" y="700" width="130" height="26" as="geometry" />
+</mxCell>
+<mxCell id="ctx_leg2"
+  value="Sistema Principal"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168BD;strokeColor=#0E5AA5;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="170" y="700" width="130" height="26" as="geometry" />
+</mxCell>
+<mxCell id="ctx_leg3"
+  value="Sistema Externo"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="310" y="700" width="130" height="26" as="geometry" />
+</mxCell>
+
+<!-- PERSONA: Usuario Empleado -->
+<mxCell id="ctx_emp"
+  value="&lt;b&gt;Usuario Empleado&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#89BBEE&quot; style=&quot;font-size:9px&quot;&gt;[Persona]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Empleado de la organización.&lt;br/&gt;Consulta documentos internos&lt;br/&gt;mediante chat con IA.&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#073B6F;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="40" y="165" width="170" height="150" as="geometry" />
+</mxCell>
+
+<!-- PERSONA: Administrador -->
+<mxCell id="ctx_adm"
+  value="&lt;b&gt;Administrador / Gestor&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#89BBEE&quot; style=&quot;font-size:9px&quot;&gt;[Persona]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Gestiona usuarios, roles y&lt;br/&gt;documentos del sistema.&lt;br/&gt;Rol: ADMIN o MANAGER.&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#073B6F;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="40" y="420" width="170" height="150" as="geometry" />
+</mxCell>
+
+<!-- SISTEMA PRINCIPAL: AppAi -->
+<mxCell id="ctx_appai"
+  value="&lt;b style=&quot;font-size:15px&quot;&gt;AppAi&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#AAD4FF&quot; style=&quot;font-size:10px&quot;&gt;[Software System]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Plataforma RAG empresarial.&lt;br/&gt;Chat inteligente sobre documentos internos.&lt;br/&gt;&lt;br/&gt;• Upload y procesado de documentos (PDF/TXT)&lt;br/&gt;• Búsqueda semántica con vectores (pgvector)&lt;br/&gt;• Gestión de usuarios con RBAC&lt;br/&gt;• Historial de conversaciones&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#1168BD;strokeColor=#0E5AA5;fontColor=#ffffff;fontSize=11;arcSize=4;"
+  vertex="1" parent="1">
+  <mxGeometry x="440" y="205" width="420" height="260" as="geometry" />
+</mxCell>
+
+<!-- SISTEMA EXTERNO: Google Gemini API -->
+<mxCell id="ctx_gem"
+  value="&lt;b&gt;Google Gemini API&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Servicio de IA de Google Cloud.&lt;br/&gt;• gemini-embedding-001 → 3072d&lt;br/&gt;• gemini-2.5-flash (LLM)&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="1100" y="150" width="230" height="165" as="geometry" />
+</mxCell>
+
+<!-- SISTEMA EXTERNO: PostgreSQL + pgvector -->
+<mxCell id="ctx_pg"
+  value="&lt;b&gt;PostgreSQL 16 + pgvector&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Base de datos relacional con&lt;br/&gt;extensión pgvector para búsqueda&lt;br/&gt;de vectores de 3072 dimensiones.&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="1100" y="415" width="230" height="155" as="geometry" />
+</mxCell>
+
+<!-- RELACIONES -->
+<mxCell id="ctx_r1"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Chatea, consulta documentos&lt;br/&gt;[HTTPS · Browser]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctx_emp" target="ctx_appai" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctx_r2"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Gestiona usuarios y documentos&lt;br/&gt;[HTTPS · Browser]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctx_adm" target="ctx_appai" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctx_r3"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Embeddings + LLM completions&lt;br/&gt;[HTTPS/REST · Google AI SDK]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctx_appai" target="ctx_gem" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctx_r4"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;CRUD + Vector similarity search&lt;br/&gt;[TCP · Prisma ORM / pgvector]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctx_appai" target="ctx_pg" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+</root>
+</mxGraphModel>
+</diagram>
+
+<!-- ================================================================== -->
+<!-- PÁGINA 2 — C4 NIVEL 2: CONTENEDORES                                -->
+<!-- ================================================================== -->
+<diagram id="c4_ctr" name="2 - C4 Contenedores">
+<mxGraphModel dx="1500" dy="850" grid="0" gridSize="10" guides="1"
+              tooltips="1" connect="1" arrows="1" fold="1" page="1"
+              pageScale="1" pageWidth="1700" pageHeight="950" math="0" shadow="0">
+<root>
+<mxCell id="0" /><mxCell id="1" parent="0" />
+
+<!-- TÍTULO -->
+<mxCell id="ctr_title"
+  value="AppAi — C4 Nivel 2: Contenedores"
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=18;fontColor=#1a1a2e;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="12" width="1500" height="35" as="geometry" />
+</mxCell>
+<mxCell id="ctr_sub"
+  value="¿Qué aplicaciones y servicios componen AppAi y cómo se comunican?"
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;fontColor=#666666;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="48" width="1500" height="20" as="geometry" />
+</mxCell>
+
+<!-- LEYENDA -->
+<mxCell id="ctr_leg1" value="Persona"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#073B6F;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="30" y="904" width="100" height="24" as="geometry" />
+</mxCell>
+<mxCell id="ctr_leg2" value="Contenedor"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="140" y="904" width="100" height="24" as="geometry" />
+</mxCell>
+<mxCell id="ctr_leg3" value="Base de Datos"
+  style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="250" y="900" width="110" height="32" as="geometry" />
+</mxCell>
+<mxCell id="ctr_leg4" value="Sistema Externo"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=9;"
+  vertex="1" parent="1">
+  <mxGeometry x="370" y="904" width="120" height="24" as="geometry" />
+</mxCell>
+
+<!-- PERSONAS (fuera del sistema) -->
+<mxCell id="ctr_emp"
+  value="&lt;b&gt;Usuario Empleado&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#89BBEE&quot; style=&quot;font-size:9px&quot;&gt;[Persona]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Consulta documentos&lt;br/&gt;mediante chat IA&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#073B6F;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="25" y="175" width="160" height="130" as="geometry" />
+</mxCell>
+
+<mxCell id="ctr_adm"
+  value="&lt;b&gt;Administrador&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#89BBEE&quot; style=&quot;font-size:9px&quot;&gt;[Persona]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Gestiona usuarios&lt;br/&gt;y documentos&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#08427B;strokeColor=#073B6F;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="25" y="450" width="160" height="130" as="geometry" />
+</mxCell>
+
+<!-- FRONTERA DEL SISTEMA -->
+<mxCell id="ctr_boundary"
+  value="AppAi [Software System]"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#1168BD;strokeWidth=2;strokeDasharray=8,4;fontSize=13;fontStyle=1;fontColor=#1168BD;verticalAlign=top;"
+  vertex="1" parent="1">
+  <mxGeometry x="215" y="68" width="1120" height="820" as="geometry" />
+</mxCell>
+
+<!-- CONTENEDOR: React SPA -->
+<mxCell id="ctr_react"
+  value="&lt;b&gt;React SPA&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Contenedor: Aplicación Web]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;React 19 + Vite 7 + CSS Modules&lt;br/&gt;React Router 7 · AuthContext (JWT)&lt;br/&gt;Páginas: Chat · Docs · Users · Profile&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=11;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="265" y="125" width="270" height="155" as="geometry" />
+</mxCell>
+
+<!-- CONTENEDOR: Fastify REST API -->
+<mxCell id="ctr_api"
+  value="&lt;b&gt;Fastify REST API&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Contenedor: API Application]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Fastify 5 + TypeScript + Node.js&lt;br/&gt;Clean Architecture (4 capas)&lt;br/&gt;JWT Auth + RBAC · Prisma 6&lt;br/&gt;LangChain + Google AI SDK&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=11;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="630" y="360" width="280" height="165" as="geometry" />
+</mxCell>
+
+<!-- CONTENEDOR: PostgreSQL Database -->
+<mxCell id="ctr_db"
+  value="&lt;b&gt;PostgreSQL 16 + pgvector&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Contenedor: Base de Datos]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;12 modelos · Docker (puerto 5432)&lt;br/&gt;Vectores embeddings 3072d&lt;br/&gt;pgAdmin para administración&lt;/font&gt;"
+  style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="580" y="630" width="260" height="190" as="geometry" />
+</mxCell>
+
+<!-- CONTENEDOR: FileSystem Storage -->
+<mxCell id="ctr_fs"
+  value="&lt;b&gt;FileSystem Storage&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Contenedor: Almacenamiento Local]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Archivos PDF/TXT subidos por usuarios&lt;br/&gt;backend/storage/documents/&lt;br/&gt;Node.js fs module&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=11;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="940" y="640" width="260" height="150" as="geometry" />
+</mxCell>
+
+<!-- SISTEMA EXTERNO: Google Gemini -->
+<mxCell id="ctr_gem"
+  value="&lt;b&gt;Google Gemini API&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;gemini-embedding-001 (3072d)&lt;br/&gt;gemini-2.5-flash (LLM)&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=11;arcSize=8;"
+  vertex="1" parent="1">
+  <mxGeometry x="1460" y="360" width="210" height="155" as="geometry" />
+</mxCell>
+
+<!-- RELACIONES -->
+<mxCell id="ctr_r1"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Navega, chatea, gestiona&lt;br/&gt;[HTTPS · Browser]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctr_emp" target="ctr_react" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctr_r2"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Administra usuarios/docs&lt;br/&gt;[HTTPS · Browser]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctr_adm" target="ctr_react" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctr_r3"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;API calls JSON + Bearer JWT&lt;br/&gt;[HTTPS · fetch/apiClient.ts]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctr_react" target="ctr_api" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctr_r4"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Lee/Escribe datos + vectores&lt;br/&gt;[TCP · Prisma ORM / pgvector]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctr_api" target="ctr_db" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctr_r5"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Guarda/Lee/Borra archivos&lt;br/&gt;[Node.js fs module]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctr_api" target="ctr_fs" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ctr_r6"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Embeddings + LLM completions&lt;br/&gt;[HTTPS/REST · Google AI SDK]&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="ctr_api" target="ctr_gem" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+</root>
+</mxGraphModel>
+</diagram>
+
+<!-- ================================================================== -->
+<!-- PÁGINA 3 — C4 NIVEL 3: COMPONENTES (FASTIFY BACKEND)               -->
+<!-- ================================================================== -->
+<diagram id="c4_cmp" name="3 - C4 Componentes (Backend)">
+<mxGraphModel dx="1500" dy="850" grid="0" gridSize="10" guides="1"
+              tooltips="1" connect="1" arrows="1" fold="1" page="1"
+              pageScale="1" pageWidth="2100" pageHeight="1250" math="0" shadow="0">
+<root>
+<mxCell id="0" /><mxCell id="1" parent="0" />
+
+<!-- TÍTULO -->
+<mxCell id="cmp_title"
+  value="AppAi — C4 Nivel 3: Componentes (Fastify REST API)"
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=18;fontColor=#1a1a2e;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="12" width="1900" height="35" as="geometry" />
+</mxCell>
+<mxCell id="cmp_sub"
+  value="Clean Architecture — Interfaces → Application → Domain ← Infrastructure. Las flechas indican dependencias."
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;fontColor=#666666;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="48" width="1900" height="20" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- CAPA INTERFACES — fondo azul claro                            -->
+<!-- ============================================================ -->
+<mxCell id="cmp_lay_iface"
+  value="&lt;b&gt;INTERFACES&lt;/b&gt;  /src/interfaces/"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#1a1a2e;verticalAlign=top;arcSize=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="30" y="80" width="390" height="1060" as="geometry" />
+</mxCell>
+
+<!-- Routes / DI Wiring -->
+<mxCell id="cmp_routes"
+  value="&lt;b&gt;Routes / DI Wiring&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;routes/index.ts&lt;br/&gt;Único punto de inyección manual&lt;br/&gt;de dependencias (wiring)&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="60" y="130" width="330" height="110" as="geometry" />
+</mxCell>
+
+<!-- AuthMiddleware -->
+<mxCell id="cmp_authmw"
+  value="&lt;b&gt;AuthMiddleware&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Verifica JWT Bearer&lt;br/&gt;→ request.user&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="60" y="270" width="155" height="100" as="geometry" />
+</mxCell>
+
+<!-- RoleGuard -->
+<mxCell id="cmp_roleguard"
+  value="&lt;b&gt;RoleGuard&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Middleware RBAC factory&lt;br/&gt;valida roles vs PERMISSIONS&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="235" y="270" width="155" height="100" as="geometry" />
+</mxCell>
+
+<!-- LoginController -->
+<mxCell id="cmp_loginctrl"
+  value="&lt;b&gt;LoginController&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/auth/login&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="60" y="400" width="155" height="90" as="geometry" />
+</mxCell>
+
+<!-- UserController -->
+<mxCell id="cmp_userctrl"
+  value="&lt;b&gt;UserController&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;GET/POST/PUT/DELETE&lt;br/&gt;/api/users&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="235" y="400" width="155" height="90" as="geometry" />
+</mxCell>
+
+<!-- ChatController -->
+<mxCell id="cmp_chatctrl"
+  value="&lt;b&gt;ChatController&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/chat&lt;br/&gt;GET/DELETE /conversations&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="60" y="520" width="155" height="100" as="geometry" />
+</mxCell>
+
+<!-- DocumentControllers -->
+<mxCell id="cmp_docctrl"
+  value="&lt;b&gt;Document Controllers&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Upload / List / Delete&lt;br/&gt;Download · /api/documents&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="235" y="520" width="155" height="100" as="geometry" />
+</mxCell>
+
+<!-- AIController -->
+<mxCell id="cmp_aictrl"
+  value="&lt;b&gt;AIController&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/ai/process-document&lt;br/&gt;POST /api/ai/ask&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="145" y="650" width="160" height="100" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- CAPA APPLICATION — fondo verde claro                          -->
+<!-- ============================================================ -->
+<mxCell id="cmp_lay_app"
+  value="&lt;b&gt;APPLICATION&lt;/b&gt;  /src/application/"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#1a1a2e;verticalAlign=top;arcSize=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="450" y="80" width="390" height="1060" as="geometry" />
+</mxCell>
+
+<!-- RBAC Permissions -->
+<mxCell id="cmp_perms"
+  value="&lt;b&gt;RBAC Permissions&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;permissions.ts&lt;br/&gt;Mapeo Rol → Permisos&lt;br/&gt;USER | MANAGER | ADMIN&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#82b366;strokeColor=#5f8a4a;fontColor=#ffffff;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="480" y="130" width="330" height="100" as="geometry" />
+</mxCell>
+
+<!-- UC Auth -->
+<mxCell id="cmp_uc_auth"
+  value="&lt;b&gt;Auth Use Cases&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;LoginUserUseCase&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="480" y="260" width="330" height="90" as="geometry" />
+</mxCell>
+
+<!-- UC Users -->
+<mxCell id="cmp_uc_users"
+  value="&lt;b&gt;User Use Cases&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;CreateUserUseCase&lt;br/&gt;DeleteUserUseCase&lt;br/&gt;ListUsersUseCase · UpdateUserUseCase&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="480" y="375" width="330" height="115" as="geometry" />
+</mxCell>
+
+<!-- UC Chat -->
+<mxCell id="cmp_uc_chat"
+  value="&lt;b&gt;Chat Use Cases&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;SendPromptToAIUseCase&lt;br/&gt;ListConversationsUseCase&lt;br/&gt;DeleteConversationUseCase&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="480" y="515" width="330" height="115" as="geometry" />
+</mxCell>
+
+<!-- UC Documents -->
+<mxCell id="cmp_uc_docs"
+  value="&lt;b&gt;Document Use Cases&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;UploadDocumentUseCase&lt;br/&gt;ListDocumentsUseCase&lt;br/&gt;DeleteDocumentUseCase · DownloadDocumentUseCase&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="480" y="655" width="330" height="115" as="geometry" />
+</mxCell>
+
+<!-- UC AI -->
+<mxCell id="cmp_uc_ai"
+  value="&lt;b&gt;AI Use Cases&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ProcessDocumentForAIUseCase&lt;br/&gt;AskAIQuestionUseCase&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="480" y="795" width="330" height="100" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- CAPA DOMAIN — fondo violeta claro                             -->
+<!-- ============================================================ -->
+<mxCell id="cmp_lay_dom"
+  value="&lt;b&gt;DOMAIN&lt;/b&gt;  /src/domain/"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#1a1a2e;verticalAlign=top;arcSize=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="870" y="200" width="370" height="770" as="geometry" />
+</mxCell>
+
+<!-- Domain Entities -->
+<mxCell id="cmp_entities"
+  value="&lt;b&gt;Domain Entities&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — núcleo puro]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;User · Document · Conversation&lt;br/&gt;Prompt · AIResponse · DocumentChunk&lt;br/&gt;Sin dependencias externas&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="900" y="260" width="310" height="130" as="geometry" />
+</mxCell>
+
+<!-- Repository Interfaces -->
+<mxCell id="cmp_repo_iface"
+  value="&lt;b&gt;Repository Interfaces&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — contratos]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;UserRepository&lt;br/&gt;DocumentRepository&lt;br/&gt;ConversationRepository&lt;br/&gt;VectorRepository&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="900" y="420" width="310" height="140" as="geometry" />
+</mxCell>
+
+<!-- Service Interfaces -->
+<mxCell id="cmp_svc_iface"
+  value="&lt;b&gt;Service Interfaces&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — contratos]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;AuthProvider · AIProvider&lt;br/&gt;EmbeddingService · ChunkingService&lt;br/&gt;VectorSearchService · AIService&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="900" y="590" width="310" height="140" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- CAPA INFRASTRUCTURE — fondo amarillo claro                    -->
+<!-- ============================================================ -->
+<mxCell id="cmp_lay_infra"
+  value="&lt;b&gt;INFRASTRUCTURE&lt;/b&gt;  /src/infrastructure/ + /src/modules/ai/"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#1a1a2e;verticalAlign=top;arcSize=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1270" y="80" width="390" height="1060" as="geometry" />
+</mxCell>
+
+<!-- Prisma Repositories -->
+<mxCell id="cmp_prisma"
+  value="&lt;b&gt;Prisma Repositories&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — implementaciones]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;PrismaUserRepository&lt;br/&gt;PrismaDocumentRepository&lt;br/&gt;PrismaConversationRepository&lt;br/&gt;PrismaRoleRepository · PrismaAuthRepository&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="130" width="330" height="145" as="geometry" />
+</mxCell>
+
+<!-- Security Services -->
+<mxCell id="cmp_security"
+  value="&lt;b&gt;Security Services&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;JwtService (jsonwebtoken)&lt;br/&gt;PasswordHasher (bcrypt 10r)&lt;br/&gt;DatabaseAuthProvider&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="300" width="330" height="120" as="geometry" />
+</mxCell>
+
+<!-- FileStorageService -->
+<mxCell id="cmp_filestorage"
+  value="&lt;b&gt;FileStorageService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Guarda/Lee/Elimina archivos&lt;br/&gt;backend/storage/documents/&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="445" width="330" height="110" as="geometry" />
+</mxCell>
+
+<!-- GeminiEmbeddingService -->
+<mxCell id="cmp_gememb"
+  value="&lt;b&gt;GeminiEmbeddingService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — LangChain + Google AI]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;gemini-embedding-001&lt;br/&gt;Genera vectores 3072d&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="580" width="330" height="110" as="geometry" />
+</mxCell>
+
+<!-- GeminiAIService -->
+<mxCell id="cmp_gemaì"
+  value="&lt;b&gt;GeminiAIService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — Google AI SDK]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;gemini-2.5-flash&lt;br/&gt;Genera respuestas con contexto RAG&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="715" width="330" height="110" as="geometry" />
+</mxCell>
+
+<!-- RecursiveChunkingService -->
+<mxCell id="cmp_chunk"
+  value="&lt;b&gt;RecursiveChunkingService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — LangChain]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;RecursiveCharacterTextSplitter&lt;br/&gt;chunkSize=1000 · overlap=200&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="850" width="330" height="110" as="geometry" />
+</mxCell>
+
+<!-- PGVectorSearchService -->
+<mxCell id="cmp_pgvec"
+  value="&lt;b&gt;PGVectorSearchService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — pgvector]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Cosine similarity search&lt;br/&gt;SELECT ... ORDER BY embedding &lt;=&gt; query_vec LIMIT 5&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="1300" y="985" width="330" height="110" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- SISTEMAS EXTERNOS (derecha, fuera del contenedor)             -->
+<!-- ============================================================ -->
+<mxCell id="cmp_ext_pg"
+  value="&lt;b&gt;PostgreSQL 16 + pgvector&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;"
+  style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1730" y="250" width="220" height="140" as="geometry" />
+</mxCell>
+
+<mxCell id="cmp_ext_fs"
+  value="&lt;b&gt;FileSystem&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;/storage/documents/&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1730" y="445" width="220" height="110" as="geometry" />
+</mxCell>
+
+<mxCell id="cmp_ext_gem"
+  value="&lt;b&gt;Google Gemini API&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1730" y="700" width="220" height="110" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- RELACIONES ENTRE CAPAS                                         -->
+<!-- ============================================================ -->
+
+<!-- Interfaces → Application -->
+<mxCell id="cmp_r_ia"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;llama use cases&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;dashed=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+  edge="1" source="cmp_lay_iface" target="cmp_lay_app" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<!-- Application → Domain -->
+<mxCell id="cmp_r_ad"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;usa interfaces&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;dashed=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;"
+  edge="1" source="cmp_lay_app" target="cmp_lay_dom" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<!-- Infrastructure → Domain (implements) -->
+<mxCell id="cmp_r_infrad"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;implementa interfaces&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;"
+  edge="1" source="cmp_lay_infra" target="cmp_lay_dom" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<!-- Routes → Infrastructure (DI) -->
+<mxCell id="cmp_r_ri"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;inyecta dependencias (DI)&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;dashed=1;strokeColor=#888888;"
+  edge="1" source="cmp_routes" target="cmp_lay_infra" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<!-- Infrastructure → External systems -->
+<mxCell id="cmp_r_prismapg"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Prisma ORM&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="cmp_prisma" target="cmp_ext_pg" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="cmp_r_fsext"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Node.js fs&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="cmp_filestorage" target="cmp_ext_fs" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="cmp_r_gemext"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Google AI SDK · HTTPS&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="cmp_gememb" target="cmp_ext_gem" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="cmp_r_gemext2"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;Google AI SDK · HTTPS&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="cmp_gemaì" target="cmp_ext_gem" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="cmp_r_pgvecpg"
+  value="&lt;font style=&quot;font-size:9px&quot;&gt;pgvector SQL&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;"
+  edge="1" source="cmp_pgvec" target="cmp_ext_pg" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+</root>
+</mxGraphModel>
+</diagram>
+
+<!-- ================================================================== -->
+<!-- PÁGINA 4 — C4 NIVEL 3: COMPONENTES (MÓDULO AI / PIPELINE RAG)      -->
+<!-- ================================================================== -->
+<diagram id="c4_ai" name="4 - C4 Componentes (AI / Pipeline RAG)">
+<mxGraphModel dx="1500" dy="850" grid="0" gridSize="10" guides="1"
+              tooltips="1" connect="1" arrows="1" fold="1" page="1"
+              pageScale="1" pageWidth="1800" pageHeight="1000" math="0" shadow="0">
+<root>
+<mxCell id="0" /><mxCell id="1" parent="0" />
+
+<!-- TÍTULO -->
+<mxCell id="ai_title"
+  value="AppAi — C4 Nivel 3: Módulo AI / Pipeline RAG"
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=18;fontColor=#1a1a2e;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="12" width="1600" height="35" as="geometry" />
+</mxCell>
+<mxCell id="ai_sub"
+  value="Flujo de Ingesta (azul) y Flujo de Consulta RAG (verde). Los números indican el orden de ejecución."
+  style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=11;fontColor=#666666;"
+  vertex="1" parent="1">
+  <mxGeometry x="100" y="48" width="1600" height="20" as="geometry" />
+</mxCell>
+
+<!-- LEYENDA FLUJOS -->
+<mxCell id="ai_leg_ing"
+  value="→ Flujo Ingesta (Upload + Procesado)"
+  style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#0E5AA5;fontStyle=1;"
+  vertex="1" parent="1">
+  <mxGeometry x="30" y="945" width="280" height="24" as="geometry" />
+</mxCell>
+<mxCell id="ai_leg_rag"
+  value="→ Flujo Consulta RAG (Chat)"
+  style="text;html=1;strokeColor=none;fillColor=none;fontSize=10;fontColor=#2d7a27;fontStyle=1;"
+  vertex="1" parent="1">
+  <mxGeometry x="320" y="945" width="240" height="24" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- FRONTERA: Módulo AI (src/modules/ai/)                          -->
+<!-- ============================================================ -->
+<mxCell id="ai_boundary"
+  value="AI Module  /src/modules/ai/"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#d6b656;strokeWidth=2;strokeDasharray=8,4;fontSize=13;fontStyle=1;fontColor=#d6b656;verticalAlign=top;"
+  vertex="1" parent="1">
+  <mxGeometry x="200" y="68" width="1130" height="840" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- COMPONENTES DEL MÓDULO AI                                      -->
+<!-- ============================================================ -->
+
+<!-- AIController (Interfaces) -->
+<mxCell id="ai_ctrl"
+  value="&lt;b&gt;AIController&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#5A9DD5&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Interfaces]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/ai/process-document → Ingesta&lt;br/&gt;POST /api/ai/ask → Consulta RAG&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;"
+  vertex="1" parent="1">
+  <mxGeometry x="250" y="130" width="340" height="110" as="geometry" />
+</mxCell>
+
+<!-- ProcessDocumentForAIUseCase (Application) -->
+<mxCell id="ai_uc_proc"
+  value="&lt;b&gt;ProcessDocumentForAIUseCase&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#82b366&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Application]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Orquesta la ingesta:&lt;br/&gt;extrae texto → chunking → embedding → almacena&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="250" y="290" width="340" height="115" as="geometry" />
+</mxCell>
+
+<!-- AskAIQuestionUseCase (Application) -->
+<mxCell id="ai_uc_ask"
+  value="&lt;b&gt;AskAIQuestionUseCase&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#82b366&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Application]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Orquesta la consulta RAG:&lt;br/&gt;embed pregunta → buscar → generar respuesta&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="650" y="290" width="340" height="115" as="geometry" />
+</mxCell>
+
+<!-- RecursiveChunkingService (Infrastructure) -->
+<mxCell id="ai_chunk"
+  value="&lt;b&gt;RecursiveChunkingService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#d6b656&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Infrastructure — LangChain]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;RecursiveCharacterTextSplitter&lt;br/&gt;chunkSize=1000 · overlap=200&lt;br/&gt;Genera N chunks por documento&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="250" y="470" width="340" height="125" as="geometry" />
+</mxCell>
+
+<!-- GeminiEmbeddingService (Infrastructure) -->
+<mxCell id="ai_emb"
+  value="&lt;b&gt;GeminiEmbeddingService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#d6b656&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Infrastructure — Google AI SDK]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;gemini-embedding-001&lt;br/&gt;embedDocuments() → vector[3072] × N chunks&lt;br/&gt;embedQuery() → vector[3072] × 1&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="250" y="660" width="340" height="130" as="geometry" />
+</mxCell>
+
+<!-- PGVectorSearchService (Infrastructure) -->
+<mxCell id="ai_pgvec"
+  value="&lt;b&gt;PGVectorSearchService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#d6b656&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Infrastructure — pgvector]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;storeEmbedding() — almacena chunk + vector&lt;br/&gt;similaritySearch() — cosine similarity&lt;br/&gt;ORDER BY embedding &lt;=&gt; query_vec LIMIT 5&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="650" y="470" width="340" height="130" as="geometry" />
+</mxCell>
+
+<!-- GeminiAIService (Infrastructure) -->
+<mxCell id="ai_llm"
+  value="&lt;b&gt;GeminiAIService&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#d6b656&quot; style=&quot;font-size:9px&quot;&gt;[Componente: Infrastructure — Google AI SDK]&lt;/font&gt;&lt;br/&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;gemini-2.5-flash&lt;br/&gt;generateResponse(context + question) → texto&lt;br/&gt;Construye prompt con 5 chunks relevantes&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#000000;fontSize=10;arcSize=6;strokeWidth=2;"
+  vertex="1" parent="1">
+  <mxGeometry x="650" y="660" width="340" height="130" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- SISTEMAS EXTERNOS (datos)                                      -->
+<!-- ============================================================ -->
+
+<!-- Google Gemini API -->
+<mxCell id="ai_ext_gem"
+  value="&lt;b&gt;Google Gemini API&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cccccc&quot; style=&quot;font-size:9px&quot;&gt;[Sistema Externo]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;HTTPS · Google AI SDK&lt;/font&gt;"
+  style="rounded=1;whiteSpace=wrap;html=1;fillColor=#686868;strokeColor=#606060;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1420" y="150" width="220" height="110" as="geometry" />
+</mxCell>
+
+<!-- documents table -->
+<mxCell id="ai_ext_docs"
+  value="&lt;b&gt;documents&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Base de Datos: PostgreSQL]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;metadata del documento&lt;/font&gt;"
+  style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1420" y="350" width="220" height="130" as="geometry" />
+</mxCell>
+
+<!-- document_chunks + document_embeddings -->
+<mxCell id="ai_ext_chunks"
+  value="&lt;b&gt;document_chunks&lt;br/&gt;document_embeddings&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Base de Datos: PostgreSQL + pgvector]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;texto del chunk + vector(3072)&lt;br/&gt;transacción atómica: chunk + embedding&lt;/font&gt;"
+  style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1420" y="580" width="220" height="160" as="geometry" />
+</mxCell>
+
+<!-- messages + ai_queries -->
+<mxCell id="ai_ext_msgs"
+  value="&lt;b&gt;messages · ai_queries&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#cce5ff&quot; style=&quot;font-size:9px&quot;&gt;[Base de Datos: PostgreSQL]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;historial de chat + logs de consultas&lt;/font&gt;"
+  style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#438DD5;strokeColor=#3880C3;fontColor=#ffffff;fontSize=10;"
+  vertex="1" parent="1">
+  <mxGeometry x="1420" y="800" width="220" height="130" as="geometry" />
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- RELACIONES — FLUJO INGESTA (azul)                             -->
+<!-- ============================================================ -->
+
+<mxCell id="ai_r1"
+  value="&lt;font color=&quot;#0E5AA5&quot; style=&quot;font-size:9px&quot;&gt;① proceso documento&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#0E5AA5;strokeWidth=2;"
+  edge="1" source="ai_ctrl" target="ai_uc_proc" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r2"
+  value="&lt;font color=&quot;#0E5AA5&quot; style=&quot;font-size:9px&quot;&gt;② extrae + divide texto&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#0E5AA5;strokeWidth=2;"
+  edge="1" source="ai_uc_proc" target="ai_chunk" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r3"
+  value="&lt;font color=&quot;#0E5AA5&quot; style=&quot;font-size:9px&quot;&gt;③ genera embeddings&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#0E5AA5;strokeWidth=2;"
+  edge="1" source="ai_chunk" target="ai_emb" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r4"
+  value="&lt;font color=&quot;#0E5AA5&quot; style=&quot;font-size:9px&quot;&gt;embedDocuments() · HTTPS&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#0E5AA5;strokeWidth=2;"
+  edge="1" source="ai_emb" target="ai_ext_gem" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r5"
+  value="&lt;font color=&quot;#0E5AA5&quot; style=&quot;font-size:9px&quot;&gt;④ almacena chunks + vectores&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#0E5AA5;strokeWidth=2;"
+  edge="1" source="ai_uc_proc" target="ai_ext_chunks" parent="1">
+  <mxGeometry relative="1" as="geometry">
+    <Array as="points">
+      <mxPoint x="420" y="840" />
+      <mxPoint x="1530" y="840" />
+    </Array>
+  </mxGeometry>
+</mxCell>
+
+<!-- ============================================================ -->
+<!-- RELACIONES — FLUJO CONSULTA RAG (verde)                       -->
+<!-- ============================================================ -->
+
+<mxCell id="ai_r6"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;① pregunta del usuario&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_ctrl" target="ai_uc_ask" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r7"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;② embed pregunta&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_uc_ask" target="ai_emb" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r8"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;③ busca chunks similares&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_uc_ask" target="ai_pgvec" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r9"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;cosine similarity · pgvector&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_pgvec" target="ai_ext_chunks" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r10"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;④ genera respuesta (contexto + pregunta)&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_uc_ask" target="ai_llm" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r11"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;generateContent() · HTTPS&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_llm" target="ai_ext_gem" parent="1">
+  <mxGeometry relative="1" as="geometry" />
+</mxCell>
+
+<mxCell id="ai_r12"
+  value="&lt;font color=&quot;#2d7a27&quot; style=&quot;font-size:9px&quot;&gt;⑤ guarda mensaje + log&lt;/font&gt;"
+  style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=9;strokeColor=#2d7a27;strokeWidth=2;"
+  edge="1" source="ai_uc_ask" target="ai_ext_msgs" parent="1">
+  <mxGeometry relative="1" as="geometry">
+    <Array as="points">
+      <mxPoint x="820" y="900" />
+      <mxPoint x="1530" y="900" />
+    </Array>
+  </mxGeometry>
+</mxCell>
+
+</root>
+</mxGraphModel>
+</diagram>
+
+</mxfile>
