@@ -1,5 +1,6 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { AIService } from "../../domain/services/AIService";
+import { LLMCallbackHandler } from "./LLMCallbackHandler";
 
 export class GeminiAIService implements AIService {
   private llm: ChatGoogleGenerativeAI;
@@ -9,6 +10,7 @@ export class GeminiAIService implements AIService {
       model: "gemini-2.5-flash",
       apiKey: process.env.GEMINI_API_KEY,
       temperature: 0,
+      callbacks: [new LLMCallbackHandler()],
     });
   }
 
@@ -22,6 +24,15 @@ REGLAS ESTRICTAS:
 4. Nunca inventes datos, cifras, procesos o procedimientos que no estén explícitamente en el contexto.
 5. Responde siempre en español.
 6. Sé claro y conciso.
+
+FORMATO DE RESPUESTA (usa Markdown):
+- Usa **negrita** para resaltar términos clave o datos importantes.
+- Usa listas con viñetas (- item) cuando enumeres elementos sin orden específico.
+- Usa listas numeradas (1. item) cuando los pasos tengan un orden obligatorio.
+- Usa encabezados (## Título) solo si la respuesta cubre más de un tema diferente.
+- Separa los párrafos con una línea en blanco para facilitar la lectura.
+- No uses bloques de código a menos que la pregunta sea explícitamente técnica.
+- Si la respuesta es breve y directa, un solo párrafo es suficiente — no fuerces estructura innecesaria.
 
 CONTEXTO DOCUMENTAL:
 ${context}

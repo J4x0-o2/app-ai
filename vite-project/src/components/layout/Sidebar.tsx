@@ -118,10 +118,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     <ul className={styles.historyList}>
                         {filtered.map(conv => (
                             <li key={conv.id}>
-                                <button
+                                <div
                                     className={`${styles.historyItem} ${activeId === conv.id ? styles.historyItemActive : ''}`}
                                     onClick={() => handleOpenConversation(conv)}
                                     title={conv.id}
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={e => e.key === 'Enter' && handleOpenConversation(conv)}
                                 >
                                     <MessageSquare size={14} className={styles.historyItemIcon} />
                                     <span className={styles.historyItemTitle}>{conv.title}</span>
@@ -132,7 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                                     >
                                         <Trash2 size={13} />
                                     </button>
-                                </button>
+                                </div>
                             </li>
                         ))}
                     </ul>

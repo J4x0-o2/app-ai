@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { MessageInput } from './MessageInput';
 import { chatService } from '../services/chatService';
 import { useAuth } from '../../../store/authContext';
@@ -123,7 +124,13 @@ export const ChatArea: React.FC = () => {
                                     {msg.role === 'user' ? 'U' : 'AI'}
                                 </div>
                                 <div className={`${styles.messageContent} ${msg.role === 'user' ? styles.contentUser : styles.contentAi}`}>
-                                    {msg.content}
+                                    {msg.role === 'assistant' ? (
+                                        <div className={styles.markdown}>
+                                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        msg.content
+                                    )}
                                 </div>
                             </div>
                         ))}
