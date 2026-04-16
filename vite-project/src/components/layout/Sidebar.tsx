@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Trash2, MessageSquare, FileText, Users } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { chatService, ConversationSummary } from '../../features/chat/services/chatService';
+import { chatService } from '../../features/chat/services/chatService';
+import type { ConversationSummary } from '../../features/chat/services/chatService';
 import { useAuth } from '../../store/authContext';
 import styles from './Sidebar.module.css';
 
