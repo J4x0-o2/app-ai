@@ -43,7 +43,7 @@ export class PrismaUserRepository implements UserRepository {
         return recs.map(toUser);
     }
 
-    async save(user: User): Promise<void> {
+    async save(user: User, passwordHash: string): Promise<void> {
         let roleRec = await prisma.roles.findUnique({ where: { name: user.role } });
         if (!roleRec) {
             roleRec = await prisma.roles.create({ data: { name: user.role } });
@@ -60,7 +60,7 @@ export class PrismaUserRepository implements UserRepository {
                 phone: user.phone,
                 cargo: user.cargo,
                 username,
-                password_hash: 'default_password',
+                password_hash: passwordHash,
                 profile_image: user.profilePhotoUrl,
                 created_at: user.createdAt,
                 user_roles: {
@@ -90,6 +90,13 @@ export class PrismaUserRepository implements UserRepository {
                     create: { role_id: roleRec.id }
                 }
             }
+        });
+    }
+
+    async updatePassword(userId: string, passwordHash: string): Promise<void> {
+        await prisma.users.update({
+            where: { id: userId },
+            data: { password_hash: passwordHash, updated_at: new Date() },
         });
     }
 

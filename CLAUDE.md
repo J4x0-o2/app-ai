@@ -17,11 +17,14 @@
 
 ### Completado y funcional
 - Auth completa: JWT, RBAC, 4 roles (ADMIN, GESTOR, INSTRUCTOR, EMPLEADO)
-- Schema DB: 12 modelos (users, roles, user_roles, conversations, messages, documents, document_chunks, document_embeddings, ai_queries, audit_logs, models, llm_models)
+- Schema DB: 13 modelos (users, roles, user_roles, conversations, messages, documents, document_chunks, document_embeddings, ai_queries, audit_logs, models, llm_models, **password_reset_tokens**)
 - Pipeline RAG completo: upload PDF → chunking (LangChain, 1000 chars overlap 200) → embeddings (gemini-embedding-001, 3072 dims) → pgvector → query → cosine search (top 5) → Gemini 2.5 Flash → respuesta Markdown
 - Frontend: login, chat con sidebar, documentos, usuarios, perfil con foto (crop modal)
 - Guardrails (3 capas): InputGuardrail → LLMCallbackHandler → OutputGuardrail
 - Respuestas LLM en Markdown (renderizadas con react-markdown)
+- **Email service:** `IEmailService` (domain) + `NodemailerEmailService` (infrastructure/email/) usando Mailtrap sandbox. Intercambiable: nueva impl + rewire en `routes/index.ts`.
+- **Creación de usuario con contraseña autogenerada:** `CreateUser` genera password aleatoria, la hashea, envía email de bienvenida y la retorna en el response. El admin la ve en el modal (toggle mostrar/ocultar + copiar).
+- **Flujo "Olvidé mi contraseña":** token con expiración 24h en tabla `password_reset_tokens`. Endpoints: `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`. Páginas: `/forgot-password` y `/reset-password`.
 - Compilación TypeScript: 0 errores
 
 ### Deuda técnica pendiente
@@ -125,6 +128,7 @@ vite-project/src/
 2. `20260324000000_update_embedding_dimensions` — Cambio `vector(768)` → `vector(3072)`
 3. `add_phone_to_users` — Campo `phone VARCHAR(20)` en users
 4. `profile_image_text` — `profile_image` de VARCHAR(512) a TEXT
+5. `20260424164028_add_password_reset_tokens` — Tabla `password_reset_tokens` (token, user_id, expires_at, used_at)
 
 ---
 
@@ -227,6 +231,43 @@ npx prisma studio           # GUI en localhost:5555
 - CSS variables en `:root` (design tokens): `--color-primary`, `--radius-md`, etc.
 
 ---
+
+## Módulo de Email (implementado 2026-04-24)
+
+**Proveedor actual:** Nodemailer + Mailtrap sandbox (desarrollo). Variables en `backend/.env`.
+
+**Para cambiar proveedor:** crear nueva clase implementando `IEmailService` → cambiar wiring en `routes/index.ts`. El dominio y los use cases no se tocan.
+
+Archivos:
+- `backend/src/domain/services/IEmailService.ts` — interfaz
+- `backend/src/infrastructure/email/NodemailerEmailService.ts` — implementación con templates HTML
+
+## Flujo "Olvidé mi contraseña" (implementado 2026-04-24)
+
+```
+usuario → POST /api/auth/forgot-password (email)
+  → busca usuario (silencioso si no existe)
+  → genera token aleatorio 64-char hex, expira en 24h
+  → guarda en password_reset_tokens
+  → envía email con link: FRONTEND_URL/reset-password?token=xxx
+
+usuario → /reset-password?token=xxx
+  → POST /api/auth/reset-password (token, password)
+  → valida token (existe, no expirado, no usado)
+  → hashea nueva contraseña → actualiza users.password_hash
+  → marca token como usado
+```
+
+Archivos nuevos:
+- `backend/src/domain/entities/PasswordResetToken.ts`
+- `backend/src/domain/repositories/IPasswordResetTokenRepository.ts`
+- `backend/src/infrastructure/repositories/PrismaPasswordResetTokenRepository.ts`
+- `backend/src/application/use-cases/auth/RequestPasswordResetUseCase.ts`
+- `backend/src/application/use-cases/auth/ResetPasswordUseCase.ts`
+- `backend/src/interfaces/controllers/auth/PasswordResetController.ts`
+- `vite-project/src/features/auth/services/authService.ts`
+- `vite-project/src/pages/ForgotPasswordPage.tsx`
+- `vite-project/src/pages/ResetPasswordPage.tsx`
 
 ## Próximas funcionalidades sugeridas (roadmap)
 
