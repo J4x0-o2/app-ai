@@ -111,6 +111,8 @@ model users {
   cargo                                  String?         @db.VarChar(100)
   profile_image                          String?         @db.Text
   is_active                              Boolean?        @default(true)
+  must_change_password                   Boolean         @default(false)
+  password_changed_at                    DateTime?       @db.Timestamptz(6)
   created_at                             DateTime?       @default(now()) @db.Timestamptz(6)
   updated_at                             DateTime?       @default(now()) @db.Timestamptz(6)
   audit_logs                             audit_logs[]

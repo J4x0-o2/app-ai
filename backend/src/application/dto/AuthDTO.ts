@@ -13,5 +13,7 @@ export interface LoginResponse {
         role: Role;
         permissions: string[];
         profilePhotoUrl?: string;
+        mustChangePassword: boolean;
+        createdAt: string;
     };
 }

@@ -6,6 +6,7 @@ export interface UserRepository {
     findAll(): Promise<User[]>;
     save(user: User, passwordHash: string): Promise<void>;
     update(user: User): Promise<void>;
+    findPasswordHash(userId: string): Promise<string | null>;
     updatePassword(userId: string, passwordHash: string): Promise<void>;
     delete(id: string): Promise<void>;
 }

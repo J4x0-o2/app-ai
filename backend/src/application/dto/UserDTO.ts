@@ -1,6 +1,15 @@
 import { Role } from '../../shared/types/roles';
 import { User } from '../../domain/entities/User';
 
+export interface UpdateUserRequest {
+    name: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    cargo?: string;
+    role: Role;
+}
+
 export interface CreateUserRequest {
     name: string;
     lastName: string;

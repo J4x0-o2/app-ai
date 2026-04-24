@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import { routes } from './interfaces/routes';
 import { errorHandler } from './shared/errors/errorHandler';
 
@@ -15,6 +16,9 @@ server.register(cors, {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
 });
+
+// global: false → solo aplica a rutas que tengan config.rateLimit definido
+server.register(rateLimit, { global: false });
 
 server.setErrorHandler(errorHandler);
 

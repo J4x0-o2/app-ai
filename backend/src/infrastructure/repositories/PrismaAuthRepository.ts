@@ -7,6 +7,8 @@ export interface AuthUserDTO {
     isActive: boolean;
     roles: string[];
     profilePhotoUrl?: string;
+    mustChangePassword: boolean;
+    createdAt: string;
 }
 
 export interface IAuthRepository {
@@ -38,6 +40,8 @@ export class PrismaAuthRepository implements IAuthRepository {
             isActive: userRec.is_active ?? true,
             roles: roleNames,
             profilePhotoUrl: userRec.profile_image ?? undefined,
+            mustChangePassword: userRec.must_change_password,
+            createdAt: (userRec.created_at ?? new Date()).toISOString(),
         };
     }
 }

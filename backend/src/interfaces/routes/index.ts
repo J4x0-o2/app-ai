@@ -5,7 +5,7 @@ import prisma from '../../infrastructure/database/prismaClient';
 import { UserController } from '../controllers/UserController';
 import { ChatController } from '../controllers/ChatController';
 import { SendPromptRequest } from '../../application/dto/ChatDTO';
-import { CreateUserRequest } from '../../application/dto/UserDTO';
+import { CreateUserRequest, UpdateUserRequest } from '../../application/dto/UserDTO';
 
 import { PrismaUserRepository } from '../../infrastructure/repositories/PrismaUserRepository';
 import { PrismaDocumentRepository } from '../../infrastructure/repositories/PrismaDocumentRepository';
@@ -16,6 +16,7 @@ import { CreateUser } from '../../application/use-cases/users/CreateUser';
 import { DeleteUser } from '../../application/use-cases/users/DeleteUser';
 import { UpdateProfilePhoto } from '../../application/use-cases/users/UpdateProfilePhoto';
 import { ListUsersUseCase } from '../../application/use-cases/users/ListUsersUseCase';
+import { UpdateUserUseCase } from '../../application/use-cases/users/UpdateUserUseCase';
 import { SendPromptToAI } from '../../application/use-cases/chat/SendPromptToAI';
 import { GetConversationHistory } from '../../application/use-cases/chat/GetConversationHistory';
 import { ListConversationsUseCase } from '../../application/use-cases/chat/ListConversationsUseCase';
@@ -49,7 +50,9 @@ import { NodemailerEmailService } from '../../infrastructure/email/NodemailerEma
 import { PrismaPasswordResetTokenRepository } from '../../infrastructure/repositories/PrismaPasswordResetTokenRepository';
 import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/RequestPasswordResetUseCase';
 import { ResetPasswordUseCase } from '../../application/use-cases/auth/ResetPasswordUseCase';
+import { ChangePasswordUseCase } from '../../application/use-cases/auth/ChangePasswordUseCase';
 import { PasswordResetController } from '../controllers/auth/PasswordResetController';
+import { ChangePasswordController } from '../controllers/auth/ChangePasswordController';
 import { DatabaseAuthProvider } from '../../infrastructure/auth/DatabaseAuthProvider';
 import { LoginUserUseCase } from '../../application/use-cases/auth/LoginUserUseCase';
 import { LoginController } from '../controllers/auth/LoginController';
@@ -96,17 +99,13 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const createUser = new CreateUser(userRepository, passwordHasher, emailService);
     const requestPasswordReset = new RequestPasswordResetUseCase(userRepository, passwordResetTokenRepository, emailService);
     const resetPassword = new ResetPasswordUseCase(passwordResetTokenRepository, userRepository, passwordHasher);
+    const changePassword = new ChangePasswordUseCase(userRepository, passwordHasher);
     const deleteUser = new DeleteUser(userRepository);
     const updateProfilePhoto = new UpdateProfilePhoto(userRepository);
     const listUsers = new ListUsersUseCase(userRepository);
+    const updateUser = new UpdateUserUseCase(userRepository);
 
-    // Document Management Use Cases
-    const uploadDocumentUseCase = new UploadDocumentUseCase(documentRepository, fileStorageService);
-    const listDocumentsUseCase = new ListDocumentsUseCase(documentRepository);
-    const deleteDocumentUseCase = new DeleteDocumentUseCase(documentRepository);
-    const downloadDocumentUseCase = new DownloadDocumentUseCase(documentRepository, fileStorageService);
-
-    // AI Use Cases (debe ir antes de SendPromptToAI que depende de askAIQuestionUseCase)
+    // AI Use Cases — van antes de Document para que processDocumentUseCase esté disponible en upload
     const aiChunkingService = new RecursiveChunkingService();
     const aiEmbeddingService = new GeminiEmbeddingService();
     const aiVectorSearchService = new PGVectorSearchService();
@@ -114,6 +113,12 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
 
     const processDocumentUseCase = new ProcessDocumentForAIUseCase(aiChunkingService, aiEmbeddingService);
     const askAIQuestionUseCase = new AskAIQuestionUseCase(aiEmbeddingService, aiVectorSearchService, aiServiceInstance);
+
+    // Document Management Use Cases
+    const uploadDocumentUseCase = new UploadDocumentUseCase(documentRepository, fileStorageService, processDocumentUseCase);
+    const listDocumentsUseCase = new ListDocumentsUseCase(documentRepository);
+    const deleteDocumentUseCase = new DeleteDocumentUseCase(documentRepository);
+    const downloadDocumentUseCase = new DownloadDocumentUseCase(documentRepository, fileStorageService);
 
     const sendPromptToAI = new SendPromptToAI(conversationRepository, askAIQuestionUseCase);
     const getConversationHistory = new GetConversationHistory(conversationRepository);
@@ -125,8 +130,9 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     // ======================================
     const loginController = new LoginController(loginUserUseCase);
     const passwordResetController = new PasswordResetController(requestPasswordReset, resetPassword);
+    const changePasswordController = new ChangePasswordController(changePassword);
 
-    const userController = new UserController(createUser, deleteUser, updateProfilePhoto, listUsers);
+    const userController = new UserController(createUser, deleteUser, updateProfilePhoto, listUsers, updateUser);
     const chatController = new ChatController(sendPromptToAI, getConversationHistory, listConversationsUseCase, deleteConversationUseCase);
 
     // Document Management Controllers
@@ -154,11 +160,13 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     server.post('/api/auth/login', loginController.login.bind(loginController));
     server.post<{ Body: { email: string } }>('/api/auth/forgot-password', passwordResetController.requestResetHandler.bind(passwordResetController));
     server.post<{ Body: { token: string; password: string } }>('/api/auth/reset-password', passwordResetController.resetPasswordHandler.bind(passwordResetController));
+    server.put<{ Body: { currentPassword: string; newPassword: string } }>('/api/auth/change-password', { preHandler: [authMiddleware.handle] }, changePasswordController.handle.bind(changePasswordController));
     
     // Rutas protegidas (Users)
-    server.get('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.list.bind(userController));
+    server.get('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.LIST_USERS)] }, userController.list.bind(userController));
     server.post<{ Body: CreateUserRequest }>('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.create.bind(userController));
-    server.delete<{ Params: { id: string } }>('/api/users/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.delete.bind(userController));
+    server.put<{ Params: { id: string }, Body: UpdateUserRequest }>('/api/users/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.UPDATE_USER)] }, userController.update.bind(userController));
+    server.delete<{ Params: { id: string } }>('/api/users/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.DELETE_USER)] }, userController.delete.bind(userController));
     server.patch<{ Params: { id: string }, Body: { photoUrl: string } }>('/api/users/:id/photo', { preHandler: [authMiddleware.handle] }, userController.updatePhoto.bind(userController));
 
     // Rutas protegidas (Documents)
@@ -168,7 +176,32 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     server.delete<{ Params: { id: string } }>('/api/documents/:id', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.DELETE_DOCUMENT)] }, deleteDocumentController.delete.bind(deleteDocumentController));
 
     // Rutas protegidas (Chat / Conversations)
-    server.post<{ Body: SendPromptRequest }>('/api/chat', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.sendPrompt.bind(chatController));
+    server.post<{ Body: SendPromptRequest }>('/api/chat', {
+        config: {
+            rateLimit: {
+                max: 30,
+                timeWindow: '1 minute',
+                // Limita por userId extraído del JWT (sin verificar firma — solo como clave)
+                keyGenerator: (request: any) => {
+                    const auth = request.headers.authorization as string | undefined;
+                    if (auth?.startsWith('Bearer ')) {
+                        try {
+                            const payload = JSON.parse(
+                                Buffer.from(auth.split('.')[1], 'base64url').toString()
+                            );
+                            if (payload.userId) return `user:${payload.userId}`;
+                        } catch { /* fallback a IP */ }
+                    }
+                    return request.ip;
+                },
+                errorResponseBuilder: () => ({
+                    error: 'TooManyRequests',
+                    message: 'Has alcanzado el límite de 30 mensajes por minuto. Intenta de nuevo en un momento.',
+                }),
+            },
+        },
+        preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)],
+    }, chatController.sendPrompt.bind(chatController));
     server.get<{ Params: { conversationId: string }, Querystring: { userId: string } }>('/api/chat/:conversationId/history', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.getHistory.bind(chatController));
     server.get('/api/conversations', { preHandler: [authMiddleware.handle] }, chatController.list.bind(chatController));
     server.delete<{ Params: { id: string } }>('/api/conversations/:id', { preHandler: [authMiddleware.handle] }, chatController.delete.bind(chatController));
