@@ -3,14 +3,16 @@ import { CreateUser } from '../../application/use-cases/users/CreateUser';
 import { DeleteUser } from '../../application/use-cases/users/DeleteUser';
 import { UpdateProfilePhoto } from '../../application/use-cases/users/UpdateProfilePhoto';
 import { ListUsersUseCase } from '../../application/use-cases/users/ListUsersUseCase';
-import { CreateUserRequest } from '../../application/dto/UserDTO';
+import { UpdateUserUseCase } from '../../application/use-cases/users/UpdateUserUseCase';
+import { CreateUserRequest, UpdateUserRequest } from '../../application/dto/UserDTO';
 
 export class UserController {
     constructor(
         private createUser: CreateUser,
         private deleteUser: DeleteUser,
         private updateProfilePhoto: UpdateProfilePhoto,
-        private listUsers: ListUsersUseCase
+        private listUsers: ListUsersUseCase,
+        private updateUser: UpdateUserUseCase
     ) { }
 
     async list(_request: FastifyRequest, reply: FastifyReply) {
@@ -26,6 +28,11 @@ export class UserController {
     async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
         await this.deleteUser.execute(request.params.id);
         return reply.status(204).send();
+    }
+
+    async update(request: FastifyRequest<{ Params: { id: string }, Body: UpdateUserRequest }>, reply: FastifyReply) {
+        const result = await this.updateUser.execute(request.params.id, request.body);
+        return reply.status(200).send(result);
     }
 
     async updatePhoto(request: FastifyRequest<{ Params: { id: string }, Body: { photoUrl: string } }>, reply: FastifyReply) {

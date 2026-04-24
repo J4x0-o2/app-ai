@@ -13,26 +13,34 @@
 
 ---
 
-## Estado actual del proyecto (2026-04-24)
+## Estado actual del proyecto (2026-04-24 — sesión 3)
 
 ### Completado y funcional
 - Auth completa: JWT, RBAC, 4 roles (ADMIN, GESTOR, INSTRUCTOR, EMPLEADO)
-- Schema DB: 13 modelos (users, roles, user_roles, conversations, messages, documents, document_chunks, document_embeddings, ai_queries, audit_logs, models, llm_models, **password_reset_tokens**)
+- Schema DB: 13 modelos (users, roles, user_roles, conversations, messages, documents, document_chunks, document_embeddings, ai_queries, audit_logs, models, llm_models, **password_reset_tokens**) + 2 columnas nuevas en users: `must_change_password`, `password_changed_at`
 - Pipeline RAG completo: upload PDF → chunking (LangChain, 1000 chars overlap 200) → embeddings (gemini-embedding-001, 3072 dims) → pgvector → query → cosine search (top 5) → Gemini 2.5 Flash → respuesta Markdown
 - Frontend: login, chat con sidebar, documentos, usuarios, perfil con foto (crop modal)
 - Guardrails (3 capas): InputGuardrail → LLMCallbackHandler → OutputGuardrail
 - Respuestas LLM en Markdown (renderizadas con react-markdown)
 - **Email service:** `IEmailService` (domain) + `NodemailerEmailService` (infrastructure/email/) usando Mailtrap sandbox. Intercambiable: nueva impl + rewire en `routes/index.ts`.
-- **Creación de usuario con contraseña autogenerada:** `CreateUser` genera password aleatoria, la hashea, envía email de bienvenida y la retorna en el response. El admin la ve en el modal (toggle mostrar/ocultar + copiar).
+- **Creación de usuario con contraseña autogenerada:** `CreateUser` genera password aleatoria, la hashea, envía email de bienvenida y la retorna en el response. Al crear, `must_change_password=true`. Modal con rol explícito (placeholder obliga selección, sin default EMPLEADO).
 - **Flujo "Olvidé mi contraseña":** token con expiración 24h en tabla `password_reset_tokens`. Endpoints: `POST /api/auth/forgot-password` y `POST /api/auth/reset-password`. Páginas: `/forgot-password` y `/reset-password`.
-- Compilación TypeScript: 0 errores
+- **CRUD usuarios completo:** Create, List, Update (`PUT /api/users/:id`), Delete, UpdateProfilePhoto. `UpdateUserUseCase` en `application/use-cases/users/UpdateUserUseCase.ts`. Modal de edición en `UsersPage` con pre-llenado; lápiz visible para ADMIN y GESTOR, basurero solo ADMIN.
+- **RBAC corregido (sesión 3):** GESTOR sin acceso a documentos. Permisos separados: `LIST_USERS`, `UPDATE_USER` (ADMIN+GESTOR), `DELETE_USER` (ADMIN). `ProtectedRoute` acepta `allowedRoles` prop; `/documents` → ADMIN+INSTRUCTOR; `/users` → ADMIN+GESTOR. Sidebar: Documentos oculto para GESTOR y EMPLEADO; Usuarios visible para ADMIN y GESTOR.
+- **Cambiar contraseña desde perfil:** endpoint `PUT /api/auth/change-password` (requiere JWT). Valida contraseña actual antes de cambiar. Al cambiar: `must_change_password=false`, `password_changed_at=now()`.
+- **Banner en ProfilePage:** si `must_change_password=true`, muestra "Te quedan X días para cambiar tu contraseña" con plazo de 7 días desde `created_at`. Colores: amarillo → naranja (≤2 días) → rojo (vencida). Desaparece al cambiar contraseña sin re-login.
+- **Login show/hide contraseña:** corregido en `Input.tsx` / `Input.module.css` (background:none, border:none, z-index, padding-right cuando isPassword).
+- **TypeScript check correcto frontend:** usar `npx tsc --noEmit -p tsconfig.app.json` (el root tsconfig.json tiene `files:[]` y no chequea nada).
+- Compilación TypeScript: 0 errores (backend y frontend)
+
+### Implementado en sesión 3
+- **Procesamiento automático de documentos:** `UploadDocumentUseCase` llama a `ProcessDocumentForAIUseCase` automáticamente. Un solo `POST /api/documents/upload` hace upload + chunking + embeddings. Frontend simplificado: un estado `'uploading'`, sin llamada separada a `process`. El endpoint `/ai/process-document` se mantiene para reprocesamiento manual de admin.
+- **Rate limiting en `/api/chat`:** `@fastify/rate-limit` registrado con `global: false`. Límite de 30 req/min por usuario (keyGenerator decodifica `userId` del JWT). Respuesta 429 con mensaje en español.
 
 ### Deuda técnica pendiente
 - Sin refresh tokens
-- Sin rate limiting
 - Sin tests (unitarios ni integración)
 - Sin WebSockets (chat es REST puro, no streaming)
-- Procesamiento de documento no es automático: requiere dos pasos separados (upload + process)
 
 ---
 
@@ -106,11 +114,13 @@ vite-project/src/
 /login       → AuthLayout > LoginPage > LoginForm
 /chat        → ProtectedRoute > DashboardLayout > ChatPage > ChatArea
 /chat/:id    → ProtectedRoute > DashboardLayout > ChatPage > ChatArea (historial)
-/documents   → ProtectedRoute > DashboardLayout > DocumentsPage
-/users       → ProtectedRoute > DashboardLayout > UsersPage (solo ADMIN en sidebar)
+/documents   → ProtectedRoute allowedRoles=[ADMIN,INSTRUCTOR] > DashboardLayout > DocumentsPage
+/users       → ProtectedRoute allowedRoles=[ADMIN,GESTOR] > DashboardLayout > UsersPage
 /profile     → ProtectedRoute > DashboardLayout > ProfilePage
 *            → redirect /login
 ```
+
+**ProtectedRoute:** acepta prop opcional `allowedRoles?: string[]`. Si el rol del usuario no está en la lista, redirige a `/chat`.
 
 ---
 
@@ -129,6 +139,7 @@ vite-project/src/
 3. `add_phone_to_users` — Campo `phone VARCHAR(20)` en users
 4. `profile_image_text` — `profile_image` de VARCHAR(512) a TEXT
 5. `20260424164028_add_password_reset_tokens` — Tabla `password_reset_tokens` (token, user_id, expires_at, used_at)
+6. `20260424183351_add_password_change_tracking` — `must_change_password BOOLEAN DEFAULT false` y `password_changed_at TIMESTAMPTZ NULL` en users
 
 ---
 
@@ -242,6 +253,28 @@ Archivos:
 - `backend/src/domain/services/IEmailService.ts` — interfaz
 - `backend/src/infrastructure/email/NodemailerEmailService.ts` — implementación con templates HTML
 
+## Flujo "Cambiar contraseña" desde perfil (implementado 2026-04-24)
+
+```
+usuario autenticado → PUT /api/auth/change-password { currentPassword, newPassword }
+  → AuthMiddleware valida JWT → obtiene userId
+  → ChangePasswordUseCase:
+      → findPasswordHash(userId) → verifica currentPassword con bcrypt
+      → hashea newPassword
+      → updatePassword(userId, newHash) → sets must_change_password=false, password_changed_at=now()
+  → 200 OK
+```
+
+Frontend: `ProfilePage.tsx` muestra formulario con 3 campos (actual, nueva, confirmar) + toggle ver/ocultar.
+Al éxito: `clearMustChangePassword()` en authContext actualiza localStorage sin re-login.
+Banner desaparece inmediatamente.
+
+Archivos:
+- `backend/src/application/use-cases/auth/ChangePasswordUseCase.ts`
+- `backend/src/interfaces/controllers/auth/ChangePasswordController.ts`
+
+---
+
 ## Flujo "Olvidé mi contraseña" (implementado 2026-04-24)
 
 ```
@@ -271,9 +304,9 @@ Archivos nuevos:
 
 ## Próximas funcionalidades sugeridas (roadmap)
 
-1. **Procesamiento automático al subir**: en `UploadDocumentUseCase`, llamar a `ProcessDocumentForAIUseCase` automáticamente al final del upload
+1. ~~**Procesamiento automático al subir**~~ ✅ Implementado sesión 3
 2. **Refresh tokens**: rotating refresh token para evitar re-login frecuente
-3. **Rate limiting**: `fastify-rate-limit` en `/api/chat`
+3. ~~**Rate limiting**~~ ✅ Implementado sesión 3
 4. **WebSocket / SSE**: streaming de respuestas del LLM para mejor UX
 5. **Tests**: Jest + Supertest, prioritariamente para use cases y guardrails
 6. **Endpoint `/me`**: validar token activo en recarga de página (sin leer localStorage)

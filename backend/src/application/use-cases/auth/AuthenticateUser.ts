@@ -24,7 +24,9 @@ export class AuthenticateUser {
                 id: user.id,
                 email: user.email,
                 role: user.role,
-                permissions
+                permissions,
+                mustChangePassword: false,
+                createdAt: user.createdAt.toISOString(),
             }
         };
     }

@@ -290,30 +290,38 @@ Google Gemini API (externa)
 
 ## Pipeline RAG
 
-1. **Ingesta**: PDF/TXT subido → texto extraído → chunks (1000 tokens, overlap 200) → embeddings Gemini 3072-dim → almacenados en pgvector
+1. **Ingesta**: PDF subido vía `POST /api/documents/upload` → el backend hace en un solo paso: texto extraído → chunks (1000 chars, overlap 200) → embeddings Gemini 3072-dim → almacenados en pgvector
 2. **Consulta**: pregunta → embedding → búsqueda coseno en pgvector (top 5 chunks) → contexto inyectado al LLM → respuesta en Markdown
+
+> **Rate limiting:** `/api/chat` tiene límite de 30 requests/minuto por usuario (JWT userId). Responde 429 si se supera.
 
 ## RBAC — Roles y permisos
 
-| Rol | CREATE_USER | UPLOAD_DOC | LIST_DOC | DELETE_DOC | DOWNLOAD_DOC | CHAT |
-|-----|:-----------:|:----------:|:--------:|:----------:|:------------:|:----:|
-| `ADMIN` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `GESTOR` | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
-| `INSTRUCTOR` | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `EMPLEADO` | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Rol | CREATE_USER | LIST_USER | UPDATE_USER | DELETE_USER | UPLOAD_DOC | LIST_DOC | DELETE_DOC | DOWNLOAD_DOC | CHAT | VER DOCS | VER USUARIOS |
+|-----|:-----------:|:---------:|:-----------:|:-----------:|:----------:|:--------:|:----------:|:------------:|:----:|:--------:|:------------:|
+| `ADMIN` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `GESTOR` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| `INSTRUCTOR` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `EMPLEADO` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
 
 ## Endpoints principales
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `POST` | `/api/auth/login` | Login → devuelve JWT + usuario |
+| `POST` | `/api/auth/login` | Login → devuelve JWT + usuario (incl. mustChangePassword, createdAt) |
+| `POST` | `/api/auth/forgot-password` | Solicitar reset de contraseña por email |
+| `POST` | `/api/auth/reset-password` | Resetear contraseña con token |
+| `PUT` | `/api/auth/change-password` | Cambiar contraseña (requiere JWT + contraseña actual) |
 | `POST` | `/api/users` | Crear usuario (ADMIN/GESTOR) |
 | `GET` | `/api/users` | Listar usuarios (ADMIN/GESTOR) |
-| `POST` | `/api/documents/upload` | Subir documento (multipart) |
-| `GET` | `/api/documents` | Listar documentos activos |
-| `DELETE` | `/api/documents/:id` | Soft delete de documento |
+| `PUT` | `/api/users/:id` | Editar usuario (ADMIN/GESTOR) |
+| `DELETE` | `/api/users/:id` | Desactivar usuario (ADMIN) |
+| `PATCH` | `/api/users/:id/photo` | Actualizar foto de perfil |
+| `POST` | `/api/documents/upload` | Subir documento (multipart, ADMIN/INSTRUCTOR) |
+| `GET` | `/api/documents` | Listar documentos activos (ADMIN/GESTOR/INSTRUCTOR) |
+| `DELETE` | `/api/documents/:id` | Soft delete de documento (ADMIN/INSTRUCTOR) |
 | `POST` | `/ai/process-document` | Procesar doc: chunking + embeddings → pgvector |
-| `POST` | `/api/chat` | Enviar prompt → respuesta RAG |
+| `POST` | `/api/chat` | Enviar prompt → respuesta RAG (todos los roles) |
 | `GET` | `/api/conversations` | Listar conversaciones del usuario |
 | `DELETE` | `/api/conversations/:id` | Eliminar conversación |
 | `GET` | `/health/db` | Health check de la BD |

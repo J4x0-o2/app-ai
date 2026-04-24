@@ -1,5 +1,6 @@
 import { DocumentRepository } from '../../../domain/repositories/DocumentRepository';
 import { FileStorageService } from '../../../infrastructure/storage/FileStorageService';
+import { ProcessDocumentForAIUseCase } from '../../../modules/ai/application/usecases/ProcessDocumentForAIUseCase';
 import { Document } from '../../../domain/entities/Document';
 import { ApplicationError } from '../../../shared/errors/errors';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,7 +21,8 @@ export class UploadDocumentUseCase {
 
     constructor(
         private documentRepository: DocumentRepository,
-        private fileStorageService: FileStorageService
+        private fileStorageService: FileStorageService,
+        private processDocumentForAI: ProcessDocumentForAIUseCase
     ) { }
 
     async execute(request: UploadDocumentRequest): Promise<Document> {
@@ -53,6 +55,9 @@ export class UploadDocumentUseCase {
 
         // Block 3 & 5: Save metadata in DB
         await this.documentRepository.create(document);
+
+        // Chunking + embeddings automático tras guardar el documento
+        await this.processDocumentForAI.execute(document.id);
 
         return document;
     }
