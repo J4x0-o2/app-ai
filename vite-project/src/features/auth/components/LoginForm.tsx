@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { apiClient, ApiError } from '../../../utils/apiClient';
@@ -75,7 +75,7 @@ export const LoginForm: React.FC = () => {
                 {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
             </Button>
 
-            <a href="#" className={styles.forgotPassword}>¿Olvidó su contraseña?</a>
+            <Link to="/forgot-password" className={styles.forgotPassword}>¿Olvidó su contraseña?</Link>
         </form>
     );
 };

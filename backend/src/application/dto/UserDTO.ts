@@ -22,6 +22,7 @@ export interface UserResponse {
     createdAt: Date;
     createdBy: string;
     profilePhotoUrl?: string;
+    generatedPassword?: string;
 }
 
 export const toUserResponse = (user: User): UserResponse => ({
