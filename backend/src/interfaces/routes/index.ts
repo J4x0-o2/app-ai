@@ -45,6 +45,11 @@ import { AIController } from '../../modules/ai/interfaces/controllers/AIControll
 import { PrismaAuthRepository } from '../../infrastructure/repositories/PrismaAuthRepository';
 import { PasswordHasher } from '../../infrastructure/security/PasswordHasher';
 import { JwtService } from '../../infrastructure/security/JwtService';
+import { NodemailerEmailService } from '../../infrastructure/email/NodemailerEmailService';
+import { PrismaPasswordResetTokenRepository } from '../../infrastructure/repositories/PrismaPasswordResetTokenRepository';
+import { RequestPasswordResetUseCase } from '../../application/use-cases/auth/RequestPasswordResetUseCase';
+import { ResetPasswordUseCase } from '../../application/use-cases/auth/ResetPasswordUseCase';
+import { PasswordResetController } from '../controllers/auth/PasswordResetController';
 import { DatabaseAuthProvider } from '../../infrastructure/auth/DatabaseAuthProvider';
 import { LoginUserUseCase } from '../../application/use-cases/auth/LoginUserUseCase';
 import { LoginController } from '../controllers/auth/LoginController';
@@ -85,7 +90,12 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const databaseAuthProvider = new DatabaseAuthProvider(authRepository, passwordHasher, jwtService);
     const loginUserUseCase = new LoginUserUseCase(databaseAuthProvider);
 
-    const createUser = new CreateUser(userRepository);
+    const emailService = new NodemailerEmailService();
+    const passwordResetTokenRepository = new PrismaPasswordResetTokenRepository();
+
+    const createUser = new CreateUser(userRepository, passwordHasher, emailService);
+    const requestPasswordReset = new RequestPasswordResetUseCase(userRepository, passwordResetTokenRepository, emailService);
+    const resetPassword = new ResetPasswordUseCase(passwordResetTokenRepository, userRepository, passwordHasher);
     const deleteUser = new DeleteUser(userRepository);
     const updateProfilePhoto = new UpdateProfilePhoto(userRepository);
     const listUsers = new ListUsersUseCase(userRepository);
@@ -114,6 +124,7 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     // Controllers
     // ======================================
     const loginController = new LoginController(loginUserUseCase);
+    const passwordResetController = new PasswordResetController(requestPasswordReset, resetPassword);
 
     const userController = new UserController(createUser, deleteUser, updateProfilePhoto, listUsers);
     const chatController = new ChatController(sendPromptToAI, getConversationHistory, listConversationsUseCase, deleteConversationUseCase);
@@ -141,6 +152,8 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
 
     // API Pública
     server.post('/api/auth/login', loginController.login.bind(loginController));
+    server.post<{ Body: { email: string } }>('/api/auth/forgot-password', passwordResetController.requestResetHandler.bind(passwordResetController));
+    server.post<{ Body: { token: string; password: string } }>('/api/auth/reset-password', passwordResetController.resetPasswordHandler.bind(passwordResetController));
     
     // Rutas protegidas (Users)
     server.get('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CREATE_USER)] }, userController.list.bind(userController));

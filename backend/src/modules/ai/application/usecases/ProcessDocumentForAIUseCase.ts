@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import pdfParse from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 import prisma from '../../../../infrastructure/database/prismaClient';
 import { ChunkingService } from '../../domain/services/ChunkingService';
 import { EmbeddingService } from '../../domain/services/EmbeddingService';
@@ -87,8 +87,9 @@ export class ProcessDocumentForAIUseCase {
     const buffer = fs.readFileSync(absolutePath);
 
     if (mimeType === 'application/pdf' || absolutePath.toLowerCase().endsWith('.pdf')) {
-      const data = await pdfParse(buffer);
-      return data.text;
+      const parser = new PDFParse({ data: new Uint8Array(buffer) });
+      const result = await parser.getText();
+      return result.text;
     }
 
     return buffer.toString('utf-8');

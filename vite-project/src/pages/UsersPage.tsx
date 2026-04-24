@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Search, Trash2, Users, Loader2 } from 'lucide-react';
+import { UserPlus, Search, Trash2, Users, Loader2, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
 import { userService, UserRecord, UserRole, CreateUserPayload } from '../features/users/services/userService';
 import { useAuth } from '../store/authContext';
@@ -37,6 +37,9 @@ export const UsersPage: React.FC = () => {
     const [form, setForm] = useState<CreateUserPayload>(emptyForm());
     const [formError, setFormError] = useState('');
     const [saving, setSaving] = useState(false);
+    const [createdPassword, setCreatedPassword] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -60,6 +63,9 @@ export const UsersPage: React.FC = () => {
     const handleOpenModal = () => {
         setForm({ ...emptyForm(), creatorId: user?.id ?? '' });
         setFormError('');
+        setCreatedPassword(null);
+        setShowPassword(false);
+        setCopied(false);
         setModalOpen(true);
     };
 
@@ -78,12 +84,30 @@ export const UsersPage: React.FC = () => {
         try {
             const created = await userService.create(form);
             setUsers(prev => [created, ...prev]);
-            setModalOpen(false);
+            if (created.generatedPassword) {
+                setCreatedPassword(created.generatedPassword);
+            } else {
+                setModalOpen(false);
+            }
         } catch (err: any) {
             setFormError(err?.message ?? 'Error al crear el usuario.');
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleCopyPassword = () => {
+        if (!createdPassword) return;
+        navigator.clipboard.writeText(createdPassword);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setCreatedPassword(null);
+        setShowPassword(false);
+        setCopied(false);
     };
 
     const handleDeleteConfirm = async () => {
@@ -193,94 +217,135 @@ export const UsersPage: React.FC = () => {
             {/* Create User Modal */}
             <Modal
                 isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                title="Crear Usuario"
+                onClose={handleCloseModal}
+                title={createdPassword ? 'Usuario creado exitosamente' : 'Crear Usuario'}
                 footer={
-                    <>
-                        <button className={styles.cancelButton} onClick={() => setModalOpen(false)}>
-                            Cancelar
+                    createdPassword ? (
+                        <button className={styles.saveButton} onClick={handleCloseModal}>
+                            Cerrar
                         </button>
-                        <button className={styles.saveButton} onClick={handleCreate} disabled={saving}>
-                            {saving ? <><Loader2 size={14} className={styles.spin} /> Guardando...</> : 'Crear Usuario'}
-                        </button>
-                    </>
+                    ) : (
+                        <>
+                            <button className={styles.cancelButton} onClick={handleCloseModal}>
+                                Cancelar
+                            </button>
+                            <button className={styles.saveButton} onClick={handleCreate} disabled={saving}>
+                                {saving ? <><Loader2 size={14} className={styles.spin} /> Guardando...</> : 'Crear Usuario'}
+                            </button>
+                        </>
+                    )
                 }
             >
-                <div className={styles.form}>
-                    {formError && <p className={styles.formError}>{formError}</p>}
-
-                    <div className={styles.formRow}>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Nombres *</label>
-                            <input
-                                className={styles.input}
-                                name="name"
-                                value={form.name}
-                                onChange={handleField}
-                                placeholder="Ej: Juan"
-                            />
+                {createdPassword ? (
+                    <div className={styles.form}>
+                        <div className={styles.successBanner}>
+                            <p>El usuario fue creado y se le envió un correo de bienvenida con sus credenciales.</p>
                         </div>
                         <div className={styles.formGroup}>
-                            <label className={styles.label}>Apellidos *</label>
-                            <input
-                                className={styles.input}
-                                name="lastName"
-                                value={form.lastName}
-                                onChange={handleField}
-                                placeholder="Ej: Pérez"
-                            />
+                            <label className={styles.label}>Contraseña temporal generada</label>
+                            <div className={styles.passwordReveal}>
+                                <span className={styles.passwordText}>
+                                    {showPassword ? createdPassword : '•'.repeat(createdPassword.length)}
+                                </span>
+                                <button
+                                    type="button"
+                                    className={styles.iconBtn}
+                                    onClick={() => setShowPassword(p => !p)}
+                                    title={showPassword ? 'Ocultar' : 'Mostrar'}
+                                >
+                                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                                <button
+                                    type="button"
+                                    className={styles.iconBtn}
+                                    onClick={handleCopyPassword}
+                                    title="Copiar contraseña"
+                                >
+                                    {copied ? <CheckCheck size={16} /> : <Copy size={16} />}
+                                </button>
+                            </div>
                         </div>
+                        <p className={styles.passwordNote}>
+                            Esta contraseña solo se muestra una vez. Asegúrate de compartirla con el usuario si es necesario.
+                        </p>
                     </div>
+                ) : (
+                    <div className={styles.form}>
+                        {formError && <p className={styles.formError}>{formError}</p>}
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Correo Electrónico *</label>
-                        <input
-                            className={styles.input}
-                            name="email"
-                            type="email"
-                            value={form.email}
-                            onChange={handleField}
-                            placeholder="usuario@empresa.com"
-                        />
-                    </div>
+                        <div className={styles.formRow}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Nombres *</label>
+                                <input
+                                    className={styles.input}
+                                    name="name"
+                                    value={form.name}
+                                    onChange={handleField}
+                                    placeholder="Ej: Juan"
+                                />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Apellidos *</label>
+                                <input
+                                    className={styles.input}
+                                    name="lastName"
+                                    value={form.lastName}
+                                    onChange={handleField}
+                                    placeholder="Ej: Pérez"
+                                />
+                            </div>
+                        </div>
 
-                    <div className={styles.formRow}>
                         <div className={styles.formGroup}>
-                            <label className={styles.label}>Teléfono</label>
+                            <label className={styles.label}>Correo Electrónico *</label>
                             <input
                                 className={styles.input}
-                                name="phone"
-                                value={form.phone}
+                                name="email"
+                                type="email"
+                                value={form.email}
                                 onChange={handleField}
-                                placeholder="Ej: 3001234567"
+                                placeholder="usuario@empresa.com"
                             />
                         </div>
-                        <div className={styles.formGroup}>
-                            <label className={styles.label}>Cargo</label>
-                            <input
-                                className={styles.input}
-                                name="cargo"
-                                value={form.cargo}
-                                onChange={handleField}
-                                placeholder="Ej: Inspector"
-                            />
-                        </div>
-                    </div>
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Rol *</label>
-                        <select
-                            className={styles.select}
-                            name="role"
-                            value={form.role}
-                            onChange={handleField}
-                        >
-                            {ROLES.map(r => (
-                                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                            ))}
-                        </select>
+                        <div className={styles.formRow}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Teléfono</label>
+                                <input
+                                    className={styles.input}
+                                    name="phone"
+                                    value={form.phone}
+                                    onChange={handleField}
+                                    placeholder="Ej: 3001234567"
+                                />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Cargo</label>
+                                <input
+                                    className={styles.input}
+                                    name="cargo"
+                                    value={form.cargo}
+                                    onChange={handleField}
+                                    placeholder="Ej: Inspector"
+                                />
+                            </div>
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Rol *</label>
+                            <select
+                                className={styles.select}
+                                name="role"
+                                value={form.role}
+                                onChange={handleField}
+                            >
+                                {ROLES.map(r => (
+                                    <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                </div>
+                )}
             </Modal>
 
             {/* Confirm delete modal */}

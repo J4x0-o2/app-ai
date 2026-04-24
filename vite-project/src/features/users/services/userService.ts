@@ -11,6 +11,7 @@ export interface UserRecord {
     cargo?: string;
     role: UserRole;
     createdAt: string;
+    generatedPassword?: string;
 }
 
 export interface CreateUserPayload {
