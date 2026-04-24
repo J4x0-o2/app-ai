@@ -3,18 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { apiClient, ApiError } from '../../../utils/apiClient';
-import { useAuth } from '../../../store/authContext';
+import { useAuth, type AuthUser } from '../../../store/authContext';
 import styles from './LoginForm.module.css';
 
 interface LoginResponse {
     token: string;
-    user: {
-        id: string;
-        email: string;
-        role: string;
-        permissions: string[];
-        profilePhotoUrl?: string;
-    };
+    user: AuthUser;
 }
 
 export const LoginForm: React.FC = () => {

@@ -38,14 +38,22 @@
     color: var(--color-text-muted);
 }
 
+.input.withIcon {
+    padding-right: 2.75rem;
+}
+
 .iconRight {
     position: absolute;
-    right: 1rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    padding: 0;
     color: var(--color-text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
 .iconRight:hover {

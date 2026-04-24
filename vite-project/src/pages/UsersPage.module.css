@@ -128,7 +128,7 @@
 }
 
 .thActions {
-    width: 52px;
+    width: 80px;
 }
 
 .row {
@@ -164,7 +164,8 @@
 
 .tdActions {
     text-align: right;
-    width: 52px;
+    width: 80px;
+    white-space: nowrap;
 }
 
 /* Role badge */
@@ -201,6 +202,7 @@
     border: 1px solid var(--color-border);
 }
 
+.editBtn,
 .deleteBtn {
     display: inline-flex;
     align-items: center;
@@ -215,8 +217,14 @@
     transition: opacity 0.15s, color 0.15s, background-color 0.15s;
 }
 
+.row:hover .editBtn,
 .row:hover .deleteBtn {
     opacity: 1;
+}
+
+.editBtn:hover {
+    color: var(--color-primary);
+    background-color: #eff6ff;
 }
 
 .deleteBtn:hover {
