@@ -24,11 +24,23 @@ export interface CreateUserPayload {
     creatorId: string;
 }
 
+export interface UpdateUserPayload {
+    name: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    cargo?: string;
+    role: UserRole;
+}
+
 export const userService = {
     list: () => apiClient.get<UserRecord[]>('/api/users'),
 
     create: (payload: CreateUserPayload) =>
         apiClient.post<UserRecord>('/api/users', payload),
+
+    update: (id: string, payload: UpdateUserPayload) =>
+        apiClient.put<UserRecord>(`/api/users/${id}`, payload),
 
     delete: (id: string) => apiClient.delete<void>(`/api/users/${id}`),
 };

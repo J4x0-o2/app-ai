@@ -28,7 +28,7 @@ export const Input: React.FC<InputProps> = ({
             {label && <label className={styles.label}>{label}</label>}
             <div className={styles.inputContainer}>
                 <input
-                    className={`${styles.input} ${className} ${error ? styles.inputError : ''}`}
+                    className={`${styles.input} ${isPassword ? styles.withIcon : ''} ${className} ${error ? styles.inputError : ''}`}
                     type={currentType}
                     {...props}
                 />

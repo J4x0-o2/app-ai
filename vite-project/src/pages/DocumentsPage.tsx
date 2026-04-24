@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Search, Trash2, FileText, Loader2, Calendar } from 'lucide-react';
-import { documentService, Document } from '../features/documents/services/documentService';
+import { documentService, type Document } from '../features/documents/services/documentService';
 import styles from './DocumentsPage.module.css';
 
-type UploadStatus = 'idle' | 'uploading' | 'processing' | 'done' | 'error';
+type UploadStatus = 'idle' | 'uploading' | 'done' | 'error';
 
 export const DocumentsPage: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,12 +43,8 @@ export const DocumentsPage: React.FC = () => {
 
         try {
             setUploadStatus('uploading');
-            setStatusMessage(`Subiendo "${file.name}"...`);
-            const uploaded = await documentService.upload(file);
-
-            setUploadStatus('processing');
-            setStatusMessage(`Procesando "${file.name}"...`);
-            await documentService.process(uploaded.id);
+            setStatusMessage(`Subiendo y procesando "${file.name}"...`);
+            await documentService.upload(file);
 
             setUploadStatus('done');
             setStatusMessage(`"${file.name}" listo para consultas.`);
@@ -76,7 +72,7 @@ export const DocumentsPage: React.FC = () => {
         }
     };
 
-    const isUploading = uploadStatus === 'uploading' || uploadStatus === 'processing';
+    const isUploading = uploadStatus === 'uploading';
 
     const filtered = documents.filter(doc => {
         const matchesName = doc.name.toLowerCase().includes(search.toLowerCase());
@@ -139,7 +135,7 @@ export const DocumentsPage: React.FC = () => {
                         disabled={isUploading}
                     >
                         {isUploading
-                            ? <><Loader2 size={15} className={styles.spin} /> {uploadStatus === 'uploading' ? 'Subiendo...' : 'Procesando...'}</>
+                            ? <><Loader2 size={15} className={styles.spin} /> Subiendo...</>
                             : <><Upload size={15} /> Subir Documento</>
                         }
                     </button>

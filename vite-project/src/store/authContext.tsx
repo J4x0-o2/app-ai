@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { tokenStorage } from '../utils/apiClient';
 
-interface AuthUser {
+export interface AuthUser {
     id: string;
     email: string;
     role: string;
     permissions: string[];
     profilePhotoUrl?: string;
+    mustChangePassword: boolean;
+    createdAt: string;
 }
 
 interface AuthContextValue {
@@ -15,6 +17,7 @@ interface AuthContextValue {
     login: (token: string, user: AuthUser) => void;
     logout: () => void;
     updateProfilePhoto: (url: string) => void;
+    clearMustChangePassword: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,8 +59,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
     };
 
+    const clearMustChangePassword = () => {
+        setUser(prev => {
+            if (!prev) return prev;
+            const updated = { ...prev, mustChangePassword: false };
+            localStorage.setItem('auth_user', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, updateProfilePhoto }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, updateProfilePhoto, clearMustChangePassword }}>
             {children}
         </AuthContext.Provider>
     );

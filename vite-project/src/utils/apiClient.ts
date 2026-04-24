@@ -9,13 +9,14 @@ export const tokenStorage = {
 };
 
 class ApiError extends Error {
-    constructor(
-        public status: number,
-        message: string,
-        public data?: unknown,
-    ) {
+    status: number;
+    data?: unknown;
+
+    constructor(status: number, message: string, data?: unknown) {
         super(message);
         this.name = 'ApiError';
+        this.status = status;
+        this.data = data;
     }
 }
 
@@ -42,7 +43,7 @@ async function request<T>(
         const errorData = await response.json().catch(() => ({}));
         throw new ApiError(
             response.status,
-            errorData.message || `Error ${response.status}`,
+            errorData.error || errorData.message || `Error ${response.status}`,
             errorData,
         );
     }
