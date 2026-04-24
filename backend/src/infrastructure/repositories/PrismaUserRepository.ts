@@ -43,6 +43,11 @@ export class PrismaUserRepository implements UserRepository {
         return recs.map(toUser);
     }
 
+    async findPasswordHash(userId: string): Promise<string | null> {
+        const rec = await prisma.users.findUnique({ where: { id: userId }, select: { password_hash: true } });
+        return rec?.password_hash ?? null;
+    }
+
     async save(user: User, passwordHash: string): Promise<void> {
         let roleRec = await prisma.roles.findUnique({ where: { name: user.role } });
         if (!roleRec) {
@@ -63,6 +68,7 @@ export class PrismaUserRepository implements UserRepository {
                 password_hash: passwordHash,
                 profile_image: user.profilePhotoUrl,
                 created_at: user.createdAt,
+                must_change_password: true,
                 user_roles: {
                     create: { role_id: roleRec.id }
                 }
@@ -96,7 +102,12 @@ export class PrismaUserRepository implements UserRepository {
     async updatePassword(userId: string, passwordHash: string): Promise<void> {
         await prisma.users.update({
             where: { id: userId },
-            data: { password_hash: passwordHash, updated_at: new Date() },
+            data: {
+                password_hash: passwordHash,
+                must_change_password: false,
+                password_changed_at: new Date(),
+                updated_at: new Date(),
+            },
         });
     }
 
