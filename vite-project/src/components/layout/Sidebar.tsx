@@ -74,16 +74,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                     <Plus size={18} />
                     Nuevo Chat
                 </button>
-                <NavLink
-                    to="/documents"
-                    className={({ isActive }) =>
-                        `${styles.actionButton} ${isActive ? styles.navLinkActive : ''}`
-                    }
-                >
-                    <FileText size={18} />
-                    Documentos
-                </NavLink>
-                {user?.role === 'ADMIN' && (
+                {!['EMPLEADO', 'GESTOR'].includes(user?.role ?? '') && (
+                    <NavLink
+                        to="/documents"
+                        className={({ isActive }) =>
+                            `${styles.actionButton} ${isActive ? styles.navLinkActive : ''}`
+                        }
+                    >
+                        <FileText size={18} />
+                        Documentos
+                    </NavLink>
+                )}
+                {['ADMIN', 'GESTOR'].includes(user?.role ?? '') && (
                     <NavLink
                         to="/users"
                         className={({ isActive }) =>

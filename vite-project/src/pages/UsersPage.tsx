@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus, Search, Trash2, Users, Loader2, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
+import { UserPlus, Search, Trash2, Pencil, Users, Loader2, Eye, EyeOff, Copy, CheckCheck } from 'lucide-react';
 import { Modal } from '../components/ui/Modal';
-import { userService, UserRecord, UserRole, CreateUserPayload } from '../features/users/services/userService';
+import { userService, type UserRecord, type UserRole, type CreateUserPayload, type UpdateUserPayload } from '../features/users/services/userService';
 import { useAuth } from '../store/authContext';
 import styles from './UsersPage.module.css';
 
@@ -20,7 +20,7 @@ const emptyForm = (): CreateUserPayload => ({
     email: '',
     phone: '',
     cargo: '',
-    role: 'EMPLEADO',
+    role: '' as UserRole,
     creatorId: '',
 });
 
@@ -42,6 +42,11 @@ export const UsersPage: React.FC = () => {
     const [copied, setCopied] = useState(false);
 
     const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+    const [editTarget, setEditTarget] = useState<UserRecord | null>(null);
+    const [editForm, setEditForm] = useState<UpdateUserPayload>({ name: '', lastName: '', email: '', phone: '', cargo: '', role: '' as UserRole });
+    const [editError, setEditError] = useState('');
+    const [editSaving, setEditSaving] = useState(false);
 
     useEffect(() => {
         fetchUsers();
@@ -75,8 +80,12 @@ export const UsersPage: React.FC = () => {
     };
 
     const handleCreate = async () => {
-        if (!form.name || !form.lastName || !form.email || !form.role) {
-            setFormError('Nombres, Apellidos, Correo y Rol son obligatorios.');
+        if (!form.name || !form.lastName || !form.email) {
+            setFormError('Nombres, Apellidos y Correo son obligatorios.');
+            return;
+        }
+        if (!form.role) {
+            setFormError('Debes seleccionar un rol para el usuario.');
             return;
         }
         setSaving(true);
@@ -108,6 +117,40 @@ export const UsersPage: React.FC = () => {
         setCreatedPassword(null);
         setShowPassword(false);
         setCopied(false);
+    };
+
+    const handleOpenEdit = (u: UserRecord) => {
+        setEditTarget(u);
+        setEditForm({ name: u.name, lastName: u.lastName, email: u.email, phone: u.phone ?? '', cargo: u.cargo ?? '', role: u.role });
+        setEditError('');
+    };
+
+    const handleEditField = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setEditForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleUpdate = async () => {
+        if (!editTarget) return;
+        if (!editForm.name || !editForm.lastName || !editForm.email) {
+            setEditError('Nombres, Apellidos y Correo son obligatorios.');
+            return;
+        }
+        if (!editForm.role) {
+            setEditError('Debes seleccionar un rol.');
+            return;
+        }
+        setEditSaving(true);
+        setEditError('');
+        try {
+            const updated = await userService.update(editTarget.id, editForm);
+            setUsers(prev => prev.map(u => u.id === updated.id ? { ...u, ...updated } : u));
+            setEditTarget(null);
+        } catch (err: any) {
+            setEditError(err?.message ?? 'Error al actualizar el usuario.');
+        } finally {
+            setEditSaving(false);
+        }
     };
 
     const handleDeleteConfirm = async () => {
@@ -199,13 +242,24 @@ export const UsersPage: React.FC = () => {
                                         </span>
                                     </td>
                                     <td className={styles.tdActions}>
-                                        <button
-                                            className={styles.deleteBtn}
-                                            onClick={() => setDeleteTargetId(u.id)}
-                                            title="Eliminar usuario"
-                                        >
-                                            <Trash2 size={15} />
-                                        </button>
+                                        {['ADMIN', 'GESTOR'].includes(user?.role ?? '') && (
+                                            <button
+                                                className={styles.editBtn}
+                                                onClick={() => handleOpenEdit(u)}
+                                                title="Editar usuario"
+                                            >
+                                                <Pencil size={15} />
+                                            </button>
+                                        )}
+                                        {user?.role === 'ADMIN' && (
+                                            <button
+                                                className={styles.deleteBtn}
+                                                onClick={() => setDeleteTargetId(u.id)}
+                                                title="Eliminar usuario"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -339,6 +393,7 @@ export const UsersPage: React.FC = () => {
                                 value={form.role}
                                 onChange={handleField}
                             >
+                                <option value="" disabled>Seleccionar rol...</option>
                                 {ROLES.map(r => (
                                     <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                                 ))}
@@ -346,6 +401,64 @@ export const UsersPage: React.FC = () => {
                         </div>
                     </div>
                 )}
+            </Modal>
+
+            {/* Edit User Modal */}
+            <Modal
+                isOpen={!!editTarget}
+                onClose={() => setEditTarget(null)}
+                title="Editar Usuario"
+                footer={
+                    <>
+                        <button className={styles.cancelButton} onClick={() => setEditTarget(null)}>
+                            Cancelar
+                        </button>
+                        <button className={styles.saveButton} onClick={handleUpdate} disabled={editSaving}>
+                            {editSaving ? <><Loader2 size={14} className={styles.spin} /> Guardando...</> : 'Guardar cambios'}
+                        </button>
+                    </>
+                }
+            >
+                <div className={styles.form}>
+                    {editError && <p className={styles.formError}>{editError}</p>}
+
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Nombres *</label>
+                            <input className={styles.input} name="name" value={editForm.name} onChange={handleEditField} />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Apellidos *</label>
+                            <input className={styles.input} name="lastName" value={editForm.lastName} onChange={handleEditField} />
+                        </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Correo Electrónico *</label>
+                        <input className={styles.input} name="email" type="email" value={editForm.email} onChange={handleEditField} />
+                    </div>
+
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Teléfono</label>
+                            <input className={styles.input} name="phone" value={editForm.phone ?? ''} onChange={handleEditField} />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Cargo</label>
+                            <input className={styles.input} name="cargo" value={editForm.cargo ?? ''} onChange={handleEditField} />
+                        </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Rol *</label>
+                        <select className={styles.select} name="role" value={editForm.role} onChange={handleEditField}>
+                            <option value="" disabled>Seleccionar rol...</option>
+                            {ROLES.map(r => (
+                                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
             </Modal>
 
             {/* Confirm delete modal */}

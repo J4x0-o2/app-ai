@@ -29,8 +29,12 @@ function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/chat" element={<ChatPage />} />
               <Route path="/chat/:chatId" element={<ChatPage />} />
-              <Route path="/documents" element={<DocumentsPage />} />
-              <Route path="/users" element={<UsersPage />} />
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'INSTRUCTOR']} />}>
+                <Route path="/documents" element={<DocumentsPage />} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'GESTOR']} />}>
+                <Route path="/users" element={<UsersPage />} />
+              </Route>
             </Route>
             <Route path="/profile" element={<ProfilePage />} />
           </Route>

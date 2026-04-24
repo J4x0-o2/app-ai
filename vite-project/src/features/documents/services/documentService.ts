@@ -11,16 +11,12 @@ export interface Document {
 }
 
 export const documentService = {
-    // Sube el archivo como multipart/form-data
+    // Sube el archivo; el backend hace chunking + embeddings automáticamente
     upload: (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
         return apiClient.postForm<Document>('/api/documents/upload', formData);
     },
-
-    // Dispara el procesamiento: extrae texto, genera embeddings, guarda en pgvector
-    process: (documentId: string) =>
-        apiClient.post<{ message: string }>('/ai/process-document', { documentId }),
 
     // Lista todos los documentos activos
     list: () => apiClient.get<Document[]>('/api/documents'),

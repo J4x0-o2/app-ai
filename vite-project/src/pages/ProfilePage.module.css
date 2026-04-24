@@ -117,3 +117,135 @@
     color: var(--color-danger);
     margin-top: 0.5rem;
 }
+
+/* Banner */
+.banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-top: 1.25rem;
+}
+
+.bannerIcon {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.bannerWarning {
+    background-color: #fffbeb;
+    border: 1px solid #fcd34d;
+    color: #92400e;
+}
+
+.bannerWarningHot {
+    background-color: #fff7ed;
+    border: 1px solid #fb923c;
+    color: #7c2d12;
+}
+
+.bannerDanger {
+    background-color: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+}
+
+/* Password section */
+.passwordSection {
+    margin-top: 2rem;
+}
+
+.passwordForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 420px;
+}
+
+.fieldGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-main);
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input {
+    width: 100%;
+    padding: 0.625rem 2.5rem 0.625rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-app);
+    color: var(--color-text-main);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.input:focus {
+    border-color: var(--color-primary);
+}
+
+.eyeBtn {
+    position: absolute;
+    right: 0.625rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    padding: 0;
+}
+
+.eyeBtn:hover {
+    color: var(--color-text-main);
+}
+
+.pwError {
+    font-size: 0.875rem;
+    color: var(--color-danger);
+    margin: 0;
+}
+
+.pwSuccess {
+    font-size: 0.875rem;
+    color: #16a34a;
+    margin: 0;
+}
+
+.submitBtn {
+    align-self: flex-start;
+    padding: 0.625rem 1.25rem;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.submitBtn:hover:not(:disabled) {
+    opacity: 0.88;
+}
+
+.submitBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
