@@ -7,17 +7,18 @@ export class PGVectorSearchService implements VectorSearchService {
       // Format the embedding array for pgvector
       const embeddingString = `[${embedding.join(",")}]`;
 
-      // Use Prisma queryRaw for vector similarity search (cosine similarity <=>)
-      // Joining document_embeddings with document_chunks
+      // Cast both sides to halfvec(3072) so PostgreSQL uses the HNSW index.
+      // The index is defined as: USING hnsw ((embedding::halfvec(3072)) halfvec_cosine_ops)
+      // Without this cast the planner falls back to O(n) sequential scan.
       const results = await prisma.$queryRaw`
-        SELECT 
-          de.chunk_id::text, 
-          dc.document_id::text, 
-          dc.content, 
-          1 - (de.embedding <=> ${embeddingString}::vector) as similarity
+        SELECT
+          de.chunk_id::text,
+          dc.document_id::text,
+          dc.content,
+          1 - (de.embedding::halfvec(3072) <=> ${embeddingString}::halfvec(3072)) as similarity
         FROM document_embeddings de
         JOIN document_chunks dc ON de.chunk_id = dc.id
-        ORDER BY de.embedding <=> ${embeddingString}::vector
+        ORDER BY de.embedding::halfvec(3072) <=> ${embeddingString}::halfvec(3072)
         LIMIT ${topK};
       `;
 

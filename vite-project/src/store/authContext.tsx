@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { tokenStorage } from '../utils/apiClient';
+import { tokenStorage, refreshTokenStorage } from '../utils/apiClient';
 
 export interface AuthUser {
     id: string;
@@ -14,7 +14,7 @@ export interface AuthUser {
 interface AuthContextValue {
     user: AuthUser | null;
     isAuthenticated: boolean;
-    login: (token: string, user: AuthUser) => void;
+    login: (token: string, refreshToken: string, user: AuthUser) => void;
     logout: () => void;
     updateProfilePhoto: (url: string) => void;
     clearMustChangePassword: () => void;
@@ -33,19 +33,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 setUser(JSON.parse(savedUser));
             } catch {
                 tokenStorage.remove();
+                refreshTokenStorage.remove();
                 localStorage.removeItem('auth_user');
             }
         }
     }, []);
 
-    const login = (token: string, userData: AuthUser) => {
+    // Escucha el evento de sesión expirada lanzado por apiClient cuando el refresh falla
+    useEffect(() => {
+        const handleExpired = () => {
+            setUser(null);
+            localStorage.removeItem('auth_user');
+        };
+        window.addEventListener('auth:session-expired', handleExpired);
+        return () => window.removeEventListener('auth:session-expired', handleExpired);
+    }, []);
+
+    const login = (token: string, refreshToken: string, userData: AuthUser) => {
         tokenStorage.set(token);
+        refreshTokenStorage.set(refreshToken);
         localStorage.setItem('auth_user', JSON.stringify(userData));
         setUser(userData);
     };
 
-    const logout = () => {
+    const logout = async () => {
+        try {
+            // Revoca todos los refresh tokens del usuario en el servidor
+            await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/auth/logout`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${tokenStorage.get()}` },
+            });
+        } catch {
+            // Si falla el servidor, igual limpiamos el cliente
+        }
         tokenStorage.remove();
+        refreshTokenStorage.remove();
         localStorage.removeItem('auth_user');
         setUser(null);
     };

@@ -8,6 +8,7 @@ import styles from './LoginForm.module.css';
 
 interface LoginResponse {
     token: string;
+    refreshToken: string;
     user: AuthUser;
 }
 
@@ -26,7 +27,7 @@ export const LoginForm: React.FC = () => {
 
         try {
             const response = await apiClient.post<LoginResponse>('/api/auth/login', { email, password });
-            login(response.token, response.user);
+            login(response.token, response.refreshToken, response.user);
             navigate('/chat');
         } catch (err) {
             if (err instanceof ApiError && err.status === 401) {

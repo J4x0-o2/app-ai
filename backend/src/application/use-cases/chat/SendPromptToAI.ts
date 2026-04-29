@@ -1,10 +1,13 @@
 import { ConversationRepository } from '../../../domain/repositories/ConversationRepository';
 import { AskAIQuestionUseCase } from '../../../modules/ai/application/usecases/AskAIQuestionUseCase';
+import { ChatMessage } from '../../../modules/ai/domain/services/AIService';
 import { Conversation } from '../../../domain/entities/Conversation';
 import { Prompt } from '../../../domain/entities/Prompt';
 import { AIResponse } from '../../../domain/entities/AIResponse';
 import { SendPromptRequest, SendPromptResponse } from '../../dto/ChatDTO';
 import { randomUUID } from 'crypto';
+
+const MAX_HISTORY_MESSAGES = 10; // últimos 5 turnos
 
 export class SendPromptToAI {
     constructor(
@@ -26,6 +29,16 @@ export class SendPromptToAI {
             await this.conversationRepository.saveConversation(conversation);
         }
 
+        // Build conversation history from existing prompts
+        const history: ChatMessage[] = [];
+        for (const p of conversation.prompts) {
+            history.push({ role: 'user', content: p.content });
+            if (p.response) {
+                history.push({ role: 'assistant', content: p.response.content });
+            }
+        }
+        const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
+
         const promptId = randomUUID();
         const promptEntity = new Prompt(
             promptId,
@@ -35,10 +48,9 @@ export class SendPromptToAI {
             request.model,
             new Date()
         );
-
         await this.conversationRepository.savePrompt(promptEntity);
 
-        const aiAnswer = await this.askAIQuestion.execute(request.prompt, request.userId);
+        const aiAnswer = await this.askAIQuestion.execute(request.prompt, request.userId, recentHistory);
 
         const aiResponseEntity = new AIResponse(
             randomUUID(),

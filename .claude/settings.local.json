@@ -3,7 +3,8 @@
     "allow": [
       "Bash(mkdir -p /c/Users/Fresa/Documents/Programacion/AppAi/backend/src/application/use-cases/auth)",
       "Bash(mkdir -p /c/Users/Fresa/Documents/Programacion/AppAi/backend/src/application/use-cases/users)",
-      "Bash(mkdir -p /c/Users/Fresa/Documents/Programacion/AppAi/backend/src/application/use-cases/chat)"
+      "Bash(mkdir -p /c/Users/Fresa/Documents/Programacion/AppAi/backend/src/application/use-cases/chat)",
+      "Bash(npx prisma *)"
     ]
   }
 }
