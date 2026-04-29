@@ -1,6 +1,6 @@
 import { DocumentRepository } from '../../../domain/repositories/DocumentRepository';
+import { IDocumentQueue } from '../../../domain/services/IDocumentQueue';
 import { FileStorageService } from '../../../infrastructure/storage/FileStorageService';
-import { ProcessDocumentForAIUseCase } from '../../../modules/ai/application/usecases/ProcessDocumentForAIUseCase';
 import { Document } from '../../../domain/entities/Document';
 import { ApplicationError } from '../../../shared/errors/errors';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,50 +14,44 @@ export interface UploadDocumentRequest {
 }
 
 export class UploadDocumentUseCase {
-    private readonly MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB limit
-    private readonly ALLOWED_TYPES = [
-        'application/pdf' // pdf
-    ];
+    private readonly MAX_SIZE_BYTES = 10 * 1024 * 1024;
+    private readonly ALLOWED_TYPES = ['application/pdf'];
 
     constructor(
         private documentRepository: DocumentRepository,
         private fileStorageService: FileStorageService,
-        private processDocumentForAI: ProcessDocumentForAIUseCase
+        private documentQueue: IDocumentQueue,
     ) { }
 
     async execute(request: UploadDocumentRequest): Promise<Document> {
         if (request.sizeBytes > this.MAX_SIZE_BYTES) {
             throw new ApplicationError('File exceeds max size limit of 10MB', 'VALIDATION_ERROR');
         }
-
         if (!this.ALLOWED_TYPES.includes(request.fileType)) {
             throw new ApplicationError(`Invalid file type: ${request.fileType}. Permitted: pdf`, 'VALIDATION_ERROR');
         }
-
         if (!request.buffer || request.buffer.length === 0) {
             throw new ApplicationError('File is empty', 'VALIDATION_ERROR');
         }
 
         const uniqueFilename = `${uuidv4()}-${request.filename}`;
-
-        // Block 4 & 5: Save file via FileStorageService
         const storagePath = await this.fileStorageService.save(uniqueFilename, request.buffer);
 
-        // Map to entity
         const document = new Document(
             uuidv4(),
             request.filename,
             request.fileType,
             request.sizeBytes,
             storagePath,
-            request.userId
+            request.userId,
+            'pending',
         );
 
-        // Block 3 & 5: Save metadata in DB
         await this.documentRepository.create(document);
 
-        // Chunking + embeddings automático tras guardar el documento
-        await this.processDocumentForAI.execute(document.id);
+        // Enqueue async processing — returns immediately.
+        // The worker handles chunking + embeddings and updates processing_status.
+        await this.documentQueue.enqueue({ documentId: document.id, storagePath });
 
         return document;
     }

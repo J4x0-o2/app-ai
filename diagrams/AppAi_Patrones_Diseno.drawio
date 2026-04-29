@@ -62,7 +62,7 @@
     </mxCell>
 
     <!-- Fastify -->
-    <mxCell id="L1_fastify" value="&lt;b&gt;Fastify 5&lt;/b&gt;&lt;br/&gt;Servidor HTTP&lt;br/&gt;Plugin @fastify/multipart&lt;br/&gt;setErrorHandler global&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#0050ef'&gt;[Entry Point / Framework]&lt;/font&gt;&lt;/i&gt;"
+    <mxCell id="L1_fastify" value="&lt;b&gt;Fastify 5&lt;/b&gt;&lt;br/&gt;Servidor HTTP&lt;br/&gt;Plugin @fastify/multipart&lt;br/&gt;Plugin @fastify/rate-limit (30 req/min)&lt;br/&gt;SSE via reply.hijack() + res.raw&lt;br/&gt;setErrorHandler global&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#0050ef'&gt;[Entry Point / Framework]&lt;/font&gt;&lt;/i&gt;"
       style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=11;align=center;"
       vertex="1" parent="1">
       <mxGeometry x="1065" y="120" width="250" height="120" as="geometry" />
@@ -85,7 +85,7 @@
     </mxCell>
 
     <!-- LangChain AI Services -->
-    <mxCell id="L2_ai" value="&lt;b&gt;LangChain AI Services&lt;/b&gt;&lt;br/&gt;GeminiEmbeddingService&lt;br/&gt;GeminiAIService&lt;br/&gt;PGVectorSearchService&lt;br/&gt;RecursiveChunkingService&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#8a4500'&gt;[Strategy Pattern — Implementaciones]&lt;/font&gt;&lt;/i&gt;"
+    <mxCell id="L2_ai" value="&lt;b&gt;LangChain AI Services&lt;/b&gt;&lt;br/&gt;GeminiEmbeddingService&lt;br/&gt;GeminiAIService (generateResponse + streamAnswer)&lt;br/&gt;PGVectorSearchService&lt;br/&gt;RecursiveChunkingService&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#8a4500'&gt;[Strategy Pattern — Implementaciones]&lt;/font&gt;&lt;/i&gt;"
       style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;align=center;"
       vertex="1" parent="1">
       <mxGeometry x="355" y="320" width="270" height="140" as="geometry" />
@@ -106,7 +106,7 @@
     </mxCell>
 
     <!-- Auth Provider -->
-    <mxCell id="L2_auth" value="&lt;b&gt;DatabaseAuthProvider&lt;/b&gt;&lt;br/&gt;Implementa la interfaz&lt;br/&gt;AuthProvider de Domain.&lt;br/&gt;Extensible a OAuth / Keycloak&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#8a4500'&gt;[Provider Pattern]&lt;/font&gt;&lt;/i&gt;"
+    <mxCell id="L2_auth" value="&lt;b&gt;DatabaseAuthProvider&lt;/b&gt;&lt;br/&gt;Implementa AuthProvider (Domain).&lt;br/&gt;Genera refresh token (64-char hex, 7d)&lt;br/&gt;al autenticar. Extensible a OAuth/Keycloak.&lt;br/&gt;&lt;br/&gt;&lt;b&gt;NodemailerEmailService&lt;/b&gt;&lt;br/&gt;Implementa IEmailService (Domain).&lt;br/&gt;Proveedor actual: Mailtrap SMTP sandbox.&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#8a4500'&gt;[Provider Pattern]&lt;/font&gt;&lt;/i&gt;"
       style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=11;align=center;"
       vertex="1" parent="1">
       <mxGeometry x="1185" y="320" width="230" height="140" as="geometry" />
@@ -129,7 +129,7 @@
     </mxCell>
 
     <!-- Use Cases -->
-    <mxCell id="L3_uc" value="&lt;b&gt;Use Cases&lt;/b&gt;&lt;br/&gt;CreateUser · DeleteUser · ListUsersUseCase&lt;br/&gt;LoginUserUseCase · UpdateProfilePhoto&lt;br/&gt;SendPromptToAI · GetConversationHistory&lt;br/&gt;ListConversationsUseCase · DeleteConversationUseCase&lt;br/&gt;UploadDocument · ListDocuments · DeleteDocument&lt;br/&gt;ProcessDocumentForAI · AskAIQuestion&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#1a6600'&gt;[Use Case / Command Pattern — SRP]&lt;/font&gt;&lt;/i&gt;"
+    <mxCell id="L3_uc" value="&lt;b&gt;Use Cases&lt;/b&gt;&lt;br/&gt;— Auth: AuthenticateUser · RefreshToken&lt;br/&gt;ChangePassword · RequestPasswordReset · ResetPassword&lt;br/&gt;— Users: CreateUser · UpdateUser · DeleteUser&lt;br/&gt;ListUsers · UpdateProfilePhoto&lt;br/&gt;— Chat: SendPromptToAI · StreamChatUseCase&lt;br/&gt;ListConversations · DeleteConversation&lt;br/&gt;— Documents: UploadDocument · ListDocuments&lt;br/&gt;DeleteDocument · DownloadDocument&lt;br/&gt;— AI: ProcessDocumentForAI · AskAIQuestion&lt;br/&gt;&lt;br/&gt;&lt;i&gt;&lt;font color='#1a6600'&gt;[Use Case / Command Pattern — SRP]&lt;/font&gt;&lt;/i&gt;"
       style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=11;align=center;"
       vertex="1" parent="1">
       <mxGeometry x="55" y="545" width="390" height="145" as="geometry" />
@@ -222,7 +222,7 @@
       <mxGeometry x="565" y="975" width="490" height="70" as="geometry" />
     </mxCell>
 
-    <mxCell id="legend_col3" value="&lt;b&gt;Middleware / Chain of Responsibility&lt;/b&gt; — AuthMiddleware → RoleGuard → Controller en cadena.&lt;br/&gt;&lt;b&gt;Observer Pattern ★&lt;/b&gt; — LLMCallbackHandler observa el ciclo de vida del LLM sin modificarlo.&lt;br/&gt;&lt;b&gt;Guardrail Pattern ★&lt;/b&gt; — InputGuardrail + OutputGuardrail filtran entrada y salida del LLM.&lt;br/&gt;&lt;i&gt;★ = Implementado en sesión 2026-04-16&lt;/i&gt;"
+    <mxCell id="legend_col3" value="&lt;b&gt;Middleware / Chain of Responsibility&lt;/b&gt; — AuthMiddleware → RoleGuard → Controller en cadena.&lt;br/&gt;&lt;b&gt;Observer Pattern ★&lt;/b&gt; — LLMCallbackHandler observa el ciclo de vida del LLM sin modificarlo.&lt;br/&gt;&lt;b&gt;Guardrail Pattern ★&lt;/b&gt; — InputGuardrail + OutputGuardrail filtran entrada y salida del LLM.&lt;br/&gt;&lt;b&gt;Rotating Refresh Token ★★&lt;/b&gt; — Par JWT (1d) + RefreshToken (7d) rotativo. Auto-refresh con promesa compartida en apiClient.ts.&lt;br/&gt;&lt;b&gt;SSE Streaming ★★&lt;/b&gt; — AsyncGenerator en GeminiAIService. reply.hijack() para eludir hook onSend de CORS.&lt;br/&gt;&lt;i&gt;★ = sesión 2026-04-16 · ★★ = sesión 2026-04-27&lt;/i&gt;"
       style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;fontSize=10;"
       vertex="1" parent="1">
       <mxGeometry x="1075" y="975" width="540" height="70" as="geometry" />

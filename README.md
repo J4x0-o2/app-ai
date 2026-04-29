@@ -84,6 +84,7 @@ Servicios disponibles:
 | Servicio | URL | Credenciales |
 |----------|-----|--------------|
 | PostgreSQL | `localhost:5432` | user: `appuser` / pass: `supersecurepassword` / db: `appdb` |
+| Redis 7 | `localhost:6379` | sin contraseña (dev) |
 | pgAdmin | `http://localhost:5050` | `admin@admin.com` / `admin123` |
 
 Para conectar pgAdmin a la base de datos desde la UI:
@@ -113,6 +114,7 @@ Crear el archivo `backend/.env`:
 
 ```env
 DATABASE_URL="postgresql://appuser:supersecurepassword@localhost:5432/appdb?schema=public"
+# En producción añadir: ?connection_limit=25&pool_timeout=30
 
 JWT_SECRET="cambia_esto_por_un_secreto_seguro_y_largo"
 JWT_EXPIRES_IN="1d"
@@ -120,9 +122,23 @@ JWT_EXPIRES_IN="1d"
 GEMINI_API_KEY="tu_api_key_de_google_ai_studio"
 
 FRONTEND_URL="http://localhost:5173"
+REDIS_URL="redis://localhost:6379"
+
+# Semantic cache (opcionales — defaults razonables)
+SEMANTIC_CACHE_THRESHOLD=0.92   # similitud coseno mínima para cache hit (0–1)
+SEMANTIC_CACHE_TTL_HOURS=24     # tiempo de vida de entradas del cache
+
+# Email (Mailtrap sandbox — desarrollo)
+SMTP_HOST="sandbox.smtp.mailtrap.io"
+SMTP_PORT=2525
+SMTP_USER="tu_smtp_user_de_mailtrap"
+SMTP_PASS="tu_smtp_pass_de_mailtrap"
+SMTP_FROM="noreply@appai.local"
 ```
 
 > Obtén tu `GEMINI_API_KEY` en [Google AI Studio](https://aistudio.google.com/). El modelo de embeddings usa `gemini-embedding-001` (vectores de 3072 dimensiones) y el LLM usa `gemini-2.5-flash`.
+
+> Para el email, crea una cuenta en [Mailtrap](https://mailtrap.io/) y usa las credenciales SMTP del inbox sandbox. Los emails (bienvenida, reset de contraseña) se capturan ahí sin enviarlos realmente.
 
 ### Instalar dependencias
 
@@ -273,27 +289,41 @@ kill -9 <PID>
 
 ```
 Browser (React 19) ← http://localhost:5173
-        ↓ HTTP + Bearer JWT
+        ↓ HTTP/JSON + Bearer JWT          SSE streaming (chat)
 Fastify 5 ← http://localhost:3000
-    ├── AuthMiddleware (verifica JWT)
+    ├── AuthMiddleware (JWT + Refresh Tokens rotativos)
     ├── RoleGuard (RBAC: ADMIN / GESTOR / INSTRUCTOR / EMPLEADO)
+    ├── @fastify/compress (gzip/brotli global)
+    ├── Rate Limit distribuido (Redis, 30 req/min en /api/chat y /api/chat/stream)
     └── Módulo AI (pipeline RAG):
-          InputGuardrail → Embedding (Gemini) → VectorSearch (pgvector)
-          → LLMCallbackHandler → LLM (Gemini) → OutputGuardrail
+          InputGuardrail → Embedding (Gemini) → SemanticCache check (pgvector HNSW)
+          → [MISS] VectorSearch (pgvector HNSW halfvec) → LLMCallbackHandler
+          → LLM (Gemini 2.5 Flash) → OutputGuardrail → store cache async
+          → SSE stream (POST /api/chat/stream) con historial de 10 mensajes
                 ↓ Prisma ORM
-PostgreSQL 16 + pgvector ← localhost:5432 (Docker)
+PostgreSQL 16 + pgvector 0.8.2 ← localhost:5432 (Docker)
+    ├── 14 modelos + ai_response_cache (semantic cache HNSW halfvec TTL 24h)
+    └── Índice HNSW halfvec(3072) en document_embeddings y ai_response_cache
+Redis 7 ← localhost:6379 (Docker)
+    ├── BullMQ: cola asíncrona de procesamiento de documentos
+    └── Rate limiting distribuido (2 conexiones ioredis separadas)
                 ↕
-Google Gemini API (externa)
-    ├── gemini-embedding-001  (vectores 3072 dims)
-    └── gemini-2.5-flash      (respuestas LLM)
+Google Gemini API (externa)              Mailtrap SMTP (externa)
+    ├── gemini-embedding-001 (3072 dims)  └── Welcome emails
+    └── gemini-2.5-flash (LLM)               Reset de contraseña
 ```
 
 ## Pipeline RAG
 
-1. **Ingesta**: PDF subido vía `POST /api/documents/upload` → el backend hace en un solo paso: texto extraído → chunks (1000 chars, overlap 200) → embeddings Gemini 3072-dim → almacenados en pgvector
-2. **Consulta**: pregunta → embedding → búsqueda coseno en pgvector (top 5 chunks) → contexto inyectado al LLM → respuesta en Markdown
+1. **Ingesta (async)**: PDF subido vía `POST /api/documents/upload` → HTTP 201 inmediato + `status: 'pending'` → BullMQ encola el job → `DocumentWorker` procesa en background: chunking (1000 chars overlap 200) → embeddings Gemini 3072-dim → almacenados en pgvector. Frontend sondea `GET /api/documents/:id/status` cada 3s.
+2. **Consulta con semantic cache**: pregunta → embedding → `ISemanticCache.get()` (cosine ≥ 0.92 en `ai_response_cache`) → **HIT**: respuesta inmediata sin LLM / **MISS**: búsqueda coseno HNSW en pgvector (top 5 chunks) → historial de los últimos 10 mensajes → LLM → `ISemanticCache.set()` async → respuesta Markdown
+3. **Streaming**: `POST /api/chat/stream` emite Server-Sent Events. El frontend usa una cola de caracteres (`charQueueRef`) con timer adaptativo de 18 ms (4 chars/tick cola pequeña → 12 chars/tick cola grande) para smooth streaming. En HIT de cache: el chunk cacheado se emite como único evento SSE.
 
-> **Rate limiting:** `/api/chat` tiene límite de 30 requests/minuto por usuario (JWT userId). Responde 429 si se supera.
+> **Rate limiting:** `/api/chat` y `/api/chat/stream` tienen límite de 30 requests/minuto por usuario (JWT userId), respaldado por Redis. Responde 429 si se supera.
+
+> **Refresh Tokens:** Al hacer login se emite un refresh token (64-char hex, 7 días) almacenado en `refresh_tokens`. `POST /api/auth/refresh` rota el par (revoca el viejo, emite uno nuevo). El `apiClient.ts` intercepta automáticamente los 401 y refresca el token sin interrumpir las peticiones en vuelo.
+
+> **Health check:** `GET /health` verifica DB + Redis en paralelo. Responde 200 `{ status: 'ok' }` o 503 `{ status: 'degraded' }` si alguno falla.
 
 ## RBAC — Roles y permisos
 
@@ -308,20 +338,25 @@ Google Gemini API (externa)
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| `POST` | `/api/auth/login` | Login → devuelve JWT + usuario (incl. mustChangePassword, createdAt) |
+| `POST` | `/api/auth/login` | Login → devuelve JWT + refreshToken + usuario |
+| `POST` | `/api/auth/refresh` | Rotar refresh token → emite nuevo par JWT + refreshToken |
+| `POST` | `/api/auth/logout` | Revocar todos los refresh tokens del usuario (requiere JWT) |
 | `POST` | `/api/auth/forgot-password` | Solicitar reset de contraseña por email |
-| `POST` | `/api/auth/reset-password` | Resetear contraseña con token |
+| `POST` | `/api/auth/reset-password` | Resetear contraseña con token (24h de validez) |
 | `PUT` | `/api/auth/change-password` | Cambiar contraseña (requiere JWT + contraseña actual) |
-| `POST` | `/api/users` | Crear usuario (ADMIN/GESTOR) |
+| `POST` | `/api/users` | Crear usuario con contraseña autogenerada (ADMIN/GESTOR) |
 | `GET` | `/api/users` | Listar usuarios (ADMIN/GESTOR) |
 | `PUT` | `/api/users/:id` | Editar usuario (ADMIN/GESTOR) |
 | `DELETE` | `/api/users/:id` | Desactivar usuario (ADMIN) |
 | `PATCH` | `/api/users/:id/photo` | Actualizar foto de perfil |
-| `POST` | `/api/documents/upload` | Subir documento (multipart, ADMIN/INSTRUCTOR) |
+| `POST` | `/api/documents/upload` | Subir documento → HTTP 201 inmediato + BullMQ async indexing (ADMIN/INSTRUCTOR) |
 | `GET` | `/api/documents` | Listar documentos activos (ADMIN/GESTOR/INSTRUCTOR) |
+| `GET` | `/api/documents/:id/status` | Estado de procesamiento: `pending \| processing \| done \| error` |
 | `DELETE` | `/api/documents/:id` | Soft delete de documento (ADMIN/INSTRUCTOR) |
-| `POST` | `/ai/process-document` | Procesar doc: chunking + embeddings → pgvector |
-| `POST` | `/api/chat` | Enviar prompt → respuesta RAG (todos los roles) |
+| `POST` | `/ai/process-document` | Reprocesar doc manualmente: chunking + embeddings → pgvector |
+| `POST` | `/api/chat` | Enviar prompt → respuesta RAG completa con semantic cache (todos los roles) |
+| `POST` | `/api/chat/stream` | Enviar prompt → respuesta RAG vía SSE streaming con semantic cache (todos los roles) |
 | `GET` | `/api/conversations` | Listar conversaciones del usuario |
 | `DELETE` | `/api/conversations/:id` | Eliminar conversación |
-| `GET` | `/health/db` | Health check de la BD |
+| `GET` | `/health` | Health check DB + Redis (200 ok / 503 degraded) |
+| `GET` | `/health/db` | Health check solo BD (compatibilidad) |

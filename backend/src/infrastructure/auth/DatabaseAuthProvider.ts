@@ -1,15 +1,21 @@
+import { randomBytes, randomUUID } from 'crypto';
 import { AuthProvider } from '../../domain/services/AuthProvider';
 import { IAuthRepository } from '../repositories/PrismaAuthRepository';
 import { IPasswordHasher } from '../security/PasswordHasher';
 import { IJwtService } from '../security/JwtService';
+import { IRefreshTokenRepository } from '../../domain/repositories/IRefreshTokenRepository';
+import { RefreshToken } from '../../domain/entities/RefreshToken';
 import { ApplicationError } from '../../shared/errors/errors';
 import { LoginRequest, LoginResponse } from '../../application/dto/AuthDTO';
+
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 export class DatabaseAuthProvider implements AuthProvider {
     constructor(
         private authRepository: IAuthRepository,
         private passwordHasher: IPasswordHasher,
-        private jwtService: IJwtService
+        private jwtService: IJwtService,
+        private refreshTokenRepository: IRefreshTokenRepository,
     ) {}
 
     async authenticate(request: LoginRequest): Promise<LoginResponse> {
@@ -18,7 +24,7 @@ export class DatabaseAuthProvider implements AuthProvider {
         }
 
         const user = await this.authRepository.findByEmail(request.email);
-        
+
         if (!user) {
             throw new ApplicationError('Invalid credentials', 'AUTH_FAILED');
         }
@@ -33,14 +39,27 @@ export class DatabaseAuthProvider implements AuthProvider {
             throw new ApplicationError('Invalid credentials', 'AUTH_FAILED');
         }
 
-        const token = this.jwtService.generateToken({
+        const accessToken = this.jwtService.generateToken({
             userId: user.id,
             email: user.email,
-            roles: user.roles
+            roles: user.roles,
         });
 
+        const rawRefreshToken = randomBytes(32).toString('hex');
+        const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+
+        const refreshTokenEntity = new RefreshToken(
+            randomUUID(),
+            user.id,
+            rawRefreshToken,
+            expiresAt,
+            new Date(),
+        );
+        await this.refreshTokenRepository.save(refreshTokenEntity);
+
         return {
-            token,
+            token: accessToken,
+            refreshToken: rawRefreshToken,
             user: {
                 id: user.id,
                 email: user.email,
@@ -49,7 +68,7 @@ export class DatabaseAuthProvider implements AuthProvider {
                 profilePhotoUrl: user.profilePhotoUrl,
                 mustChangePassword: user.mustChangePassword,
                 createdAt: user.createdAt,
-            }
+            },
         };
     }
 }

@@ -1,9 +1,35 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Search, Trash2, FileText, Loader2, Calendar } from 'lucide-react';
-import { documentService, type Document } from '../features/documents/services/documentService';
+import { Upload, Search, Trash2, FileText, Loader2, Calendar, Clock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { documentService, type Document, type ProcessingStatus } from '../features/documents/services/documentService';
 import styles from './DocumentsPage.module.css';
 
 type UploadStatus = 'idle' | 'uploading' | 'done' | 'error';
+
+const STATUS_LABELS: Record<ProcessingStatus, string> = {
+    pending: 'En cola',
+    processing: 'Procesando',
+    done: 'Listo',
+    error: 'Error',
+};
+
+const STATUS_STYLE: Record<ProcessingStatus, string> = {
+    pending: styles.statusPending,
+    processing: styles.statusProcessing,
+    done: styles.statusDone,
+    error: styles.statusError,
+};
+
+function StatusBadge({ status }: { status: ProcessingStatus }) {
+    return (
+        <span className={`${styles.statusBadge} ${STATUS_STYLE[status]}`}>
+            {status === 'processing' && <Loader2 size={10} className={styles.spin} />}
+            {status === 'pending' && <Clock size={10} />}
+            {status === 'error' && <AlertCircle size={10} />}
+            {status === 'done' && <CheckCircle2 size={10} />}
+            {STATUS_LABELS[status]}
+        </span>
+    );
+}
 
 export const DocumentsPage: React.FC = () => {
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -22,8 +48,19 @@ export const DocumentsPage: React.FC = () => {
         fetchDocuments();
     }, []);
 
+    // Poll every 3 s while any document is still being processed.
+    // Stops automatically when all documents reach a terminal state (done / error).
+    useEffect(() => {
+        const hasPending = documents.some(
+            d => d.processingStatus === 'pending' || d.processingStatus === 'processing'
+        );
+        if (!hasPending) return;
+
+        const timer = setInterval(fetchDocuments, 3000);
+        return () => clearInterval(timer);
+    }, [documents]);
+
     const fetchDocuments = async () => {
-        setLoading(true);
         try {
             const docs = await documentService.list();
             setDocuments(docs);
@@ -43,17 +80,17 @@ export const DocumentsPage: React.FC = () => {
 
         try {
             setUploadStatus('uploading');
-            setStatusMessage(`Subiendo y procesando "${file.name}"...`);
+            setStatusMessage(`Subiendo "${file.name}"...`);
             await documentService.upload(file);
 
             setUploadStatus('done');
-            setStatusMessage(`"${file.name}" listo para consultas.`);
+            setStatusMessage(`"${file.name}" subido. Procesando en segundo plano...`);
             await fetchDocuments();
 
             setTimeout(() => {
                 setUploadStatus('idle');
                 setStatusMessage('');
-            }, 4000);
+            }, 5000);
         } catch (err: any) {
             setUploadStatus('error');
             setStatusMessage(err?.message ?? 'Error al subir el documento.');
@@ -76,9 +113,7 @@ export const DocumentsPage: React.FC = () => {
 
     const filtered = documents.filter(doc => {
         const matchesName = doc.name.toLowerCase().includes(search.toLowerCase());
-        const matchesDate = dateFilter
-            ? doc.createdAt.slice(0, 10) === dateFilter
-            : true;
+        const matchesDate = dateFilter ? doc.createdAt.slice(0, 10) === dateFilter : true;
         return matchesName && matchesDate;
     });
 
@@ -167,6 +202,7 @@ export const DocumentsPage: React.FC = () => {
                                 <th className={styles.thIndex}>#</th>
                                 <th>Nombre</th>
                                 <th>Tipo</th>
+                                <th>Estado</th>
                                 <th>Fecha y Hora</th>
                                 <th>Tamaño</th>
                                 <th className={styles.thActions}></th>
@@ -184,6 +220,9 @@ export const DocumentsPage: React.FC = () => {
                                         <span className={styles.typeBadge}>
                                             {(doc.type?.split('/')[1] || doc.type || 'pdf').toUpperCase()}
                                         </span>
+                                    </td>
+                                    <td>
+                                        <StatusBadge status={doc.processingStatus ?? 'done'} />
                                     </td>
                                     <td className={styles.tdDate}>{formatDateTime(doc.createdAt)}</td>
                                     <td className={styles.tdSize}>{formatSize(doc.size)}</td>
