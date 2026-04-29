@@ -20,6 +20,7 @@ export class AuthenticateUser {
 
         return {
             token,
+            refreshToken: '',
             user: {
                 id: user.id,
                 email: user.email,

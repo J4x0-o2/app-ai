@@ -1,7 +1,8 @@
 import prisma from '../../../../infrastructure/database/prismaClient';
 import { EmbeddingService } from '../../domain/services/EmbeddingService';
 import { VectorSearchService } from '../../domain/services/VectorSearchService';
-import { AIService } from '../../domain/services/AIService';
+import { AIService, ChatMessage } from '../../domain/services/AIService';
+import { ISemanticCache } from '../../domain/services/ISemanticCache';
 import { InputGuardrail } from '../guardrails/InputGuardrail';
 import { OutputGuardrail } from '../guardrails/OutputGuardrail';
 
@@ -12,43 +13,46 @@ export class AskAIQuestionUseCase {
   constructor(
     private embeddingService: EmbeddingService,
     private vectorSearchService: VectorSearchService,
-    private aiService: AIService
+    private aiService: AIService,
+    private semanticCache?: ISemanticCache
   ) {}
 
-  async execute(question: string, userId?: string): Promise<string> {
+  async execute(question: string, userId?: string, history?: ChatMessage[]): Promise<string> {
     console.log(`[AI Query] Processing user question: "${question}"`);
 
-    // 0. Input Guardrail — validar antes de cualquier llamada al LLM
     const inputCheck = this.inputGuardrail.validate(question);
     if (!inputCheck.allowed) {
       return inputCheck.reason!;
     }
 
-    // 1. Generate query embedding
     const queryEmbedding = await this.embeddingService.generateEmbedding(question);
 
-    // 2. Perform vector search (top 5 chunks)
-    const topK = 5;
-    const searchResults = await this.vectorSearchService.search(queryEmbedding, topK);
+    // Semantic cache check — before vector search to save the DB round-trip on hits
+    if (this.semanticCache) {
+      const cached = await this.semanticCache.get(queryEmbedding);
+      if (cached) {
+        console.log(`[AI Query] Cache HIT (similarity: ${cached.similarity.toFixed(3)})`);
+        return cached.response;
+      }
+    }
+
+    const searchResults = await this.vectorSearchService.search(queryEmbedding, 5);
 
     if (searchResults.length === 0) {
       console.log(`[AI Query] No relevant context found for question`);
       return "No cuento con información suficiente en la documentación disponible para responder esta consulta. Si considera que debería existir documentación al respecto, comuníquese con el administrador del sistema.";
     }
 
-    // 3. Build context block
     const context = searchResults
       .map((result, index) => `--- Chunk ${index + 1} from Document ID: ${result.document_id} ---\n${result.content}`)
       .join('\n\n');
 
     console.log(`[AI Query] Retrieved ${searchResults.length} context chunks. Calling LLM...`);
 
-    // 4. Send to LLM
-    const rawAnswer = await this.aiService.answerQuestion(context, question);
+    const rawAnswer = await this.aiService.answerQuestion(context, question, history);
 
     console.log(`[AI Query] LLM response generated successfully.`);
 
-    // 5. Output Guardrail — validar la respuesta antes de devolverla
     const outputCheck = this.outputGuardrail.validate(rawAnswer);
     const answer = outputCheck.safe ? rawAnswer : this.outputGuardrail.getFallbackMessage();
 
@@ -56,16 +60,10 @@ export class AskAIQuestionUseCase {
       console.warn(`[AI Query] Output guardrail triggered. Reason: ${outputCheck.reason}. Returning fallback message.`);
     }
 
-    // 5. Optionally log the query in the database
     if (userId) {
       try {
         await prisma.ai_queries.create({
-          data: {
-            user_id: userId,
-            question,
-            response: answer,
-            model_used: "gemini-2.5-flash",
-          },
+          data: { user_id: userId, question, response: answer, model_used: "gemini-2.5-flash" },
         });
         console.log(`[AI Query] Saved query log for user ${userId}`);
       } catch (err) {
@@ -73,6 +71,59 @@ export class AskAIQuestionUseCase {
       }
     }
 
+    // Store in cache asynchronously — don't delay the response to the user
+    this.semanticCache?.set(queryEmbedding, question, answer)
+      .catch(err => console.error('[AI Query] Cache store failed:', err));
+
     return answer;
+  }
+
+  async *executeStream(question: string, userId?: string, history?: ChatMessage[]): AsyncGenerator<string> {
+    console.log(`[AI Query Stream] Processing question: "${question}"`);
+
+    const inputCheck = this.inputGuardrail.validate(question);
+    if (!inputCheck.allowed) {
+      yield inputCheck.reason!;
+      return;
+    }
+
+    const queryEmbedding = await this.embeddingService.generateEmbedding(question);
+
+    // Semantic cache check — return cached response as a single chunk (frontend queue handles display)
+    if (this.semanticCache) {
+      const cached = await this.semanticCache.get(queryEmbedding);
+      if (cached) {
+        console.log(`[AI Query Stream] Cache HIT (similarity: ${cached.similarity.toFixed(3)})`);
+        yield cached.response;
+        return;
+      }
+    }
+
+    const searchResults = await this.vectorSearchService.search(queryEmbedding, 5);
+
+    if (searchResults.length === 0) {
+      yield "No cuento con información suficiente en la documentación disponible para responder esta consulta. Si considera que debería existir documentación al respecto, comuníquese con el administrador del sistema.";
+      return;
+    }
+
+    const context = searchResults
+      .map((result, index) => `--- Chunk ${index + 1} from Document ID: ${result.document_id} ---\n${result.content}`)
+      .join('\n\n');
+
+    console.log(`[AI Query Stream] ${searchResults.length} context chunks. Starting stream...`);
+
+    // Accumulate chunks so we can store the full response in cache after the stream completes
+    let fullResponse = '';
+    try {
+      for await (const chunk of this.aiService.streamAnswer(context, question, history)) {
+        fullResponse += chunk;
+        yield chunk;
+      }
+      this.semanticCache?.set(queryEmbedding, question, fullResponse)
+        .catch(err => console.error('[AI Query Stream] Cache store failed:', err));
+    } catch (error) {
+      console.error('[AI Query Stream] Stream error:', error);
+      yield '\n\n*Ocurrió un error al generar la respuesta. Por favor, intenta nuevamente.*';
+    }
   }
 }

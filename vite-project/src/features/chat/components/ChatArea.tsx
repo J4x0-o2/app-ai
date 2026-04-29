@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { MessageInput } from './MessageInput';
@@ -11,7 +11,14 @@ interface Message {
     id: string;
     role: 'user' | 'assistant';
     content: string;
+    streaming?: boolean;
 }
+
+// Caracteres revelados por tick. Adaptativo: drena más rápido si hay backlog.
+const CHARS_SLOW = 4;   // cola pequeña  → efecto suave visible
+const CHARS_FAST = 12;  // cola grande   → no se queda atrás
+const BACKLOG_THRESHOLD = 120;
+const TICK_MS = 18; // ~55 fps
 
 export const ChatArea: React.FC = () => {
     const { user } = useAuth();
@@ -21,21 +28,84 @@ export const ChatArea: React.FC = () => {
     const [error, setError] = useState('');
     const [conversationId, setConversationId] = useState<string | undefined>();
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const abortRef = useRef<AbortController | null>(null);
+
+    // Cola de caracteres pendientes de pintar
+    const charQueueRef = useRef<string[]>([]);
+    // ID del mensaje del asistente que se está animando
+    const animMsgIdRef = useRef<string | null>(null);
+    // Handle del timer de animación
+    const animTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Flag: el stream HTTP terminó (puede quedar cola pendiente)
+    const streamEndedRef = useRef(false);
+
+    const stopAnimation = useCallback(() => {
+        if (animTimerRef.current !== null) {
+            clearTimeout(animTimerRef.current);
+            animTimerRef.current = null;
+        }
+    }, []);
+
+    const finalizeMessage = useCallback((msgId: string) => {
+        stopAnimation();
+        charQueueRef.current = [];
+        animMsgIdRef.current = null;
+        streamEndedRef.current = false;
+        setMessages(prev => prev.map(m => m.id === msgId ? { ...m, streaming: false } : m));
+        setIsLoading(false);
+    }, [stopAnimation]);
+
+    const startAnimation = useCallback((msgId: string) => {
+        if (animTimerRef.current !== null) return; // ya corriendo
+
+        const tick = () => {
+            const queue = charQueueRef.current;
+
+            if (queue.length === 0) {
+                animTimerRef.current = null;
+                if (streamEndedRef.current) {
+                    finalizeMessage(msgId);
+                }
+                // Si el stream HTTP aún no terminó, el próximo chunk reinicia el timer
+                return;
+            }
+
+            const charsThisTick = queue.length > BACKLOG_THRESHOLD ? CHARS_FAST : CHARS_SLOW;
+            const batch = queue.splice(0, charsThisTick).join('');
+
+            setMessages(prev =>
+                prev.map(m => m.id === msgId ? { ...m, content: m.content + batch } : m),
+            );
+
+            animTimerRef.current = setTimeout(tick, TICK_MS);
+        };
+
+        animTimerRef.current = setTimeout(tick, TICK_MS);
+    }, [finalizeMessage]);
 
     // Nuevo chat
     useEffect(() => {
         if (location.state?.newChat) {
+            abortRef.current?.abort();
+            stopAnimation();
+            charQueueRef.current = [];
+            streamEndedRef.current = true;
             setMessages([]);
             setConversationId(undefined);
             setError('');
+            setIsLoading(false);
         }
-    }, [location.state?.newChat]);
+    }, [location.state?.newChat, stopAnimation]);
 
     // Cargar conversación existente desde el sidebar
     useEffect(() => {
         const targetId: string | undefined = location.state?.loadConversation;
         if (!targetId || !user) return;
 
+        abortRef.current?.abort();
+        stopAnimation();
+        charQueueRef.current = [];
+        streamEndedRef.current = true;
         setIsLoading(true);
         setError('');
         setMessages([]);
@@ -57,51 +127,82 @@ export const ChatArea: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.state?.loadConversation]);
 
-    // Auto-scroll
+    // Auto-scroll solo cuando hay cambios reales (no en cada char para evitar jank)
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, isLoading]);
+    }, [messages.length, isLoading]);
 
     const handleSendMessage = async (content: string, model: string) => {
-        if (!user) return;
+        if (!user || isLoading) return;
         setError('');
 
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            role: 'user',
-            content,
-        };
+        // Reinicia el estado de animación
+        stopAnimation();
+        charQueueRef.current = [];
+        streamEndedRef.current = false;
+
+        const userMessage: Message = { id: Date.now().toString(), role: 'user', content };
         setMessages(prev => [...prev, userMessage]);
         setIsLoading(true);
 
+        const aiMessageId = `ai-${Date.now()}`;
+        animMsgIdRef.current = aiMessageId;
+        setMessages(prev => [...prev, { id: aiMessageId, role: 'assistant', content: '', streaming: true }]);
+
+        abortRef.current = new AbortController();
+
         try {
-            const result = await chatService.sendMessage({
-                userId: user.id,
-                prompt: content,
-                model,
-                conversationId,
-            });
+            const stream = chatService.streamMessage(
+                { userId: user.id, prompt: content, model, conversationId },
+                abortRef.current.signal,
+            );
 
-            // Si es una conversación nueva, avisa al sidebar para que refresque la lista
-            if (!conversationId) {
-                window.dispatchEvent(new CustomEvent('conversation-created'));
+            for await (const event of stream) {
+                if (event.error) {
+                    setError(event.error);
+                    break;
+                }
+
+                if (event.chunk) {
+                    // Encola los caracteres — el timer los pinta suavemente
+                    charQueueRef.current.push(...event.chunk.split(''));
+                    startAnimation(aiMessageId);
+                }
+
+                if (event.done && event.conversationId) {
+                    if (!conversationId) {
+                        window.dispatchEvent(new CustomEvent('conversation-created'));
+                    }
+                    setConversationId(event.conversationId);
+                }
             }
-            setConversationId(result.conversationId);
 
-            const aiMessage: Message = {
-                id: result.response.id,
-                role: 'assistant',
-                content: result.response.content,
-            };
-            setMessages(prev => [...prev, aiMessage]);
+            // HTTP stream terminó — si la cola ya está vacía, finaliza ahora;
+            // si no, el tick la drena y llama a finalizeMessage cuando acabe.
+            streamEndedRef.current = true;
+            if (charQueueRef.current.length === 0 && animTimerRef.current === null) {
+                finalizeMessage(aiMessageId);
+            }
+
         } catch (err) {
-            if (err instanceof ApiError && err.status === 401) {
+            if (err instanceof Error && err.name === 'AbortError') {
+                // cancelado — sin mensaje de error
+            } else if (err instanceof ApiError && err.status === 401) {
                 setError('Tu sesión ha expirado. Por favor, vuelve a iniciar sesión.');
             } else {
                 setError('Ocurrió un error al procesar tu consulta. Intenta nuevamente.');
             }
+            // En error: vuelca la cola restante de golpe y limpia
+            const remaining = charQueueRef.current.splice(0).join('');
+            streamEndedRef.current = true;
+            if (remaining) {
+                setMessages(prev =>
+                    prev.map(m => m.id === aiMessageId ? { ...m, content: m.content + remaining } : m),
+                );
+            }
+            finalizeMessage(aiMessageId);
         } finally {
-            setIsLoading(false);
+            abortRef.current = null;
         }
     };
 
@@ -127,6 +228,9 @@ export const ChatArea: React.FC = () => {
                                     {msg.role === 'assistant' ? (
                                         <div className={styles.markdown}>
                                             <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                            {msg.streaming && (
+                                                <span className={styles.cursor} aria-hidden="true">▋</span>
+                                            )}
                                         </div>
                                     ) : (
                                         msg.content
@@ -134,15 +238,6 @@ export const ChatArea: React.FC = () => {
                                 </div>
                             </div>
                         ))}
-
-                        {isLoading && (
-                            <div className={styles.messageRow}>
-                                <div className={`${styles.messageAvatar} ${styles.avatarAi}`}>AI</div>
-                                <div className={`${styles.messageContent} ${styles.contentAi} ${styles.typing}`}>
-                                    <span /><span /><span />
-                                </div>
-                            </div>
-                        )}
 
                         {error && <p className={styles.errorMessage}>{error}</p>}
 

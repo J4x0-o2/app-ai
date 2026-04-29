@@ -46,3 +46,5 @@ Thumbs.db
 
 # Claude directories
 .claude/
+
+CLAUDE.md

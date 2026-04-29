@@ -1,5 +1,7 @@
 import { apiClient } from '../../../utils/apiClient';
 
+export type ProcessingStatus = 'pending' | 'processing' | 'done' | 'error';
+
 export interface Document {
     id: string;
     name: string;
@@ -7,20 +9,21 @@ export interface Document {
     size: number;
     uploadedBy: string;
     isActive: boolean;
+    processingStatus: ProcessingStatus;
     createdAt: string;
 }
 
 export const documentService = {
-    // Sube el archivo; el backend hace chunking + embeddings automáticamente
     upload: (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
         return apiClient.postForm<Document>('/api/documents/upload', formData);
     },
 
-    // Lista todos los documentos activos
     list: () => apiClient.get<Document[]>('/api/documents'),
 
-    // Soft delete — marca el documento como eliminado en la DB
+    getStatus: (id: string) =>
+        apiClient.get<{ id: string; status: ProcessingStatus }>(`/api/documents/${id}/status`),
+
     delete: (id: string) => apiClient.delete<void>(`/api/documents/${id}`),
 };
