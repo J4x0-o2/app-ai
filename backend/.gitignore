@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.*
+
+# Tests
+src/__tests__/
+jest.config.ts
+coverage/

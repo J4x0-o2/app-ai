@@ -1,6 +1,7 @@
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import { LLMResult } from '@langchain/core/outputs';
 import { Serialized } from '@langchain/core/load/serializable';
+import { getCorrelationId } from '../../../../shared/context/requestContext';
 
 /**
  * LLMCallbackHandler — Capa 3: Observabilidad.
@@ -23,7 +24,7 @@ export class LLMCallbackHandler extends BaseCallbackHandler {
     const modelName = Array.isArray(llm.id) ? llm.id[llm.id.length - 1] : 'unknown';
     const promptLength = prompts[0]?.length ?? 0;
 
-    console.log(`[LLM Callback] START — model: ${modelName} | prompt: ${promptLength} chars`);
+    console.log(`[LLM Callback][${getCorrelationId()}] START — model: ${modelName} | prompt: ${promptLength} chars`);
   }
 
   handleLLMEnd(output: LLMResult, runId: string): void {
@@ -52,7 +53,7 @@ export class LLMCallbackHandler extends BaseCallbackHandler {
       'N/A';
 
     console.log(
-      `[LLM Callback] END — latency: ${latency !== null ? `${latency}ms` : 'N/A'} | tokens: { prompt: ${promptTokens}, completion: ${completionTokens}, total: ${totalTokens} }`
+      `[LLM Callback][${getCorrelationId()}] END — latency: ${latency !== null ? `${latency}ms` : 'N/A'} | tokens: { prompt: ${promptTokens}, completion: ${completionTokens}, total: ${totalTokens} }`
     );
   }
 
@@ -62,7 +63,7 @@ export class LLMCallbackHandler extends BaseCallbackHandler {
     this.startTimes.delete(runId);
 
     console.error(
-      `[LLM Callback] ERROR — after ${latency !== null ? `${latency}ms` : 'N/A'} | ${err.message}`
+      `[LLM Callback][${getCorrelationId()}] ERROR — after ${latency !== null ? `${latency}ms` : 'N/A'} | ${err.message}`
     );
   }
 }

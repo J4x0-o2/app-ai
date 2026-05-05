@@ -7,6 +7,7 @@ import compress from '@fastify/compress';
 import { routes } from './interfaces/routes';
 import { errorHandler } from './shared/errors/errorHandler';
 import { startRefreshTokenCleanupJob } from './infrastructure/jobs/RefreshTokenCleanupJob';
+import { requestContext } from './shared/context/requestContext';
 
 const server = fastify({
     logger: true,
@@ -25,6 +26,13 @@ server.register(cors, {
 server.register(compress, { global: true });
 
 server.setErrorHandler(errorHandler);
+
+// Propaga el reqId de Fastify como header x-request-id y lo almacena en AsyncLocalStorage
+// para que sea accesible desde cualquier capa (use cases, LLMCallbackHandler, workers).
+server.addHook('onRequest', (request, reply, done) => {
+    reply.header('x-request-id', request.id);
+    requestContext.run({ correlationId: String(request.id) }, done);
+});
 
 server.register(routes);
 
