@@ -67,6 +67,7 @@ import { RefreshTokenUseCase } from '../../application/use-cases/auth/RefreshTok
 import { PasswordResetController } from '../controllers/auth/PasswordResetController';
 import { ChangePasswordController } from '../controllers/auth/ChangePasswordController';
 import { RefreshTokenController } from '../controllers/auth/RefreshTokenController';
+import { GetMeController } from '../controllers/auth/GetMeController';
 import { DatabaseAuthProvider } from '../../infrastructure/auth/DatabaseAuthProvider';
 import { LoginUserUseCase } from '../../application/use-cases/auth/LoginUserUseCase';
 import { LoginController } from '../controllers/auth/LoginController';
@@ -97,7 +98,11 @@ const CHAT_RATE_LIMIT_CONFIG = {
     max: 30,
     timeWindow: '1 minute',
     keyGenerator: chatRateLimitKeyGenerator,
-    errorResponseBuilder: () => ({
+    // statusCode must be forwarded from ctx — @fastify/rate-limit throws the
+    // builder result and Fastify reads .statusCode from it to set the HTTP status.
+    // Without it Fastify defaults to 500.
+    errorResponseBuilder: (_req: unknown, ctx: { statusCode: number }) => ({
+        statusCode: ctx.statusCode,
         error: 'TooManyRequests',
         message: 'Has alcanzado el límite de 30 mensajes por minuto. Intenta de nuevo en un momento.',
     }),
@@ -217,6 +222,7 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const passwordResetController = new PasswordResetController(requestPasswordReset, resetPassword);
     const changePasswordController = new ChangePasswordController(changePassword);
     const refreshTokenController = new RefreshTokenController(refreshToken, refreshTokenRepository);
+    const getMeController = new GetMeController(new PrismaAuthRepository());
 
     const userController = new UserController(createUser, deleteUser, updateProfilePhoto, listUsers, updateUser);
     const chatController = new ChatController(sendPromptToAI, getConversationHistory, listConversationsUseCase, deleteConversationUseCase);
@@ -278,6 +284,7 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     server.post<{ Body: { email: string } }>('/api/auth/forgot-password', passwordResetController.requestResetHandler.bind(passwordResetController));
     server.post<{ Body: { token: string; password: string } }>('/api/auth/reset-password', passwordResetController.resetPasswordHandler.bind(passwordResetController));
     server.put<{ Body: { currentPassword: string; newPassword: string } }>('/api/auth/change-password', { preHandler: [authMiddleware.handle] }, changePasswordController.handle.bind(changePasswordController));
+    server.get('/api/auth/me', { preHandler: [authMiddleware.handle] }, getMeController.handle.bind(getMeController));
 
     // Rutas protegidas (Users)
     server.get('/api/users', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.LIST_USERS)] }, userController.list.bind(userController));

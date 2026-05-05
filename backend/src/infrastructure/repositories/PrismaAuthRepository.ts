@@ -13,9 +13,28 @@ export interface AuthUserDTO {
 
 export interface IAuthRepository {
     findByEmail(email: string): Promise<AuthUserDTO | null>;
+    findById(id: string): Promise<AuthUserDTO | null>;
 }
 
 export class PrismaAuthRepository implements IAuthRepository {
+    async findById(id: string): Promise<AuthUserDTO | null> {
+        const userRec = await prisma.users.findUnique({
+            where: { id },
+            include: { user_roles: { include: { roles: true } } },
+        });
+        if (!userRec) return null;
+        return {
+            id: userRec.id,
+            email: userRec.email,
+            passwordHash: userRec.password_hash,
+            isActive: userRec.is_active ?? true,
+            roles: userRec.user_roles.map(ur => ur.roles.name),
+            profilePhotoUrl: userRec.profile_image ?? undefined,
+            mustChangePassword: userRec.must_change_password,
+            createdAt: (userRec.created_at ?? new Date()).toISOString(),
+        };
+    }
+
     async findByEmail(email: string): Promise<AuthUserDTO | null> {
         const userRec = await prisma.users.findUnique({
             where: { email },

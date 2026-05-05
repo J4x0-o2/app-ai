@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { tokenStorage, refreshTokenStorage } from '../utils/apiClient';
+import { tokenStorage, refreshTokenStorage, apiClient } from '../utils/apiClient';
 
 export interface AuthUser {
     id: string;
@@ -14,6 +14,7 @@ export interface AuthUser {
 interface AuthContextValue {
     user: AuthUser | null;
     isAuthenticated: boolean;
+    isInitialized: boolean;
     login: (token: string, refreshToken: string, user: AuthUser) => void;
     logout: () => void;
     updateProfilePhoto: (url: string) => void;
@@ -24,19 +25,25 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
         const token = tokenStorage.get();
-        const savedUser = localStorage.getItem('auth_user');
-        if (token && savedUser) {
-            try {
-                setUser(JSON.parse(savedUser));
-            } catch {
+        if (!token) {
+            setIsInitialized(true);
+            return;
+        }
+        apiClient.get<{ user: AuthUser }>('/api/auth/me')
+            .then(({ user: freshUser }) => {
+                localStorage.setItem('auth_user', JSON.stringify(freshUser));
+                setUser(freshUser);
+            })
+            .catch(() => {
                 tokenStorage.remove();
                 refreshTokenStorage.remove();
                 localStorage.removeItem('auth_user');
-            }
-        }
+            })
+            .finally(() => setIsInitialized(true));
     }, []);
 
     // Escucha el evento de sesión expirada lanzado por apiClient cuando el refresh falla
@@ -91,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, updateProfilePhoto, clearMustChangePassword }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isInitialized, login, logout, updateProfilePhoto, clearMustChangePassword }}>
             {children}
         </AuthContext.Provider>
     );

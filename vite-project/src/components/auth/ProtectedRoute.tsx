@@ -6,7 +6,11 @@ interface Props {
 }
 
 export const ProtectedRoute: React.FC<Props> = ({ allowedRoles }) => {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, isInitialized, user } = useAuth();
+
+    if (!isInitialized) {
+        return null;
+    }
 
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
