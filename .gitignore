@@ -49,3 +49,6 @@ Thumbs.db
 # Markdown docs (excepto README.md)
 *.md
 !README.md
+
+# Claude Code
+.claude/
