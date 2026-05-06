@@ -302,7 +302,7 @@
                         <mxPoint x="425" y="155" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="m3" value="3: POST /api/chat/send  { Authorization: Bearer JWT }" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                <mxCell id="m3" value="3: POST /api/chat  { Authorization: Bearer JWT }" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="425" y="190" as="sourcePoint"/>
                         <mxPoint x="595" y="190" as="targetPoint"/>
@@ -385,7 +385,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="m14b" value="14: Gemini 1.5 Pro — generate content" style="text;html=1;fontSize=9;align=left;verticalAlign=top;" parent="1" vertex="1">
+                <mxCell id="m14b" value="14: Gemini 2.5 Flash — generate content" style="text;html=1;fontSize=9;align=left;verticalAlign=top;" parent="1" vertex="1">
                     <mxGeometry x="1488" y="563" width="220" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="m15" value="15: AI response text" style="endArrow=open;endFill=0;html=1;fontSize=10;dashed=1;strokeColor=#666666;labelBackgroundColor=#ffffff;" parent="1" edge="1">
@@ -436,8 +436,8 @@
                         <mxPoint x="85" y="855" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="rag_note" value="[RAG Pipeline: pasos 6-15]&#xa;Embedding → Vector Search → LLM Generation" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#ffffc0;strokeColor=#999900;fontSize=10;" parent="1" vertex="1">
-                    <mxGeometry x="1150" y="280" width="250" height="55" as="geometry"/>
+                <mxCell id="rag_note" value="[RAG Pipeline: pasos 6-15]&#xa;① embed → ② Semantic Cache check (pgvector HNSW halfvec, threshold 0.92)&#xa;  HIT: respuesta cacheada inmediata (salta vector search + LLM)&#xa;  MISS → ③ Vector Search (top 5) → ④ Gemini 2.5 Flash" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#ffffc0;strokeColor=#999900;fontSize=9;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="1050" y="275" width="360" height="70" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
@@ -856,6 +856,94 @@
                 </mxCell>
                 <mxCell id="m23" value="22: INSERT messages (user + assistant) en PostgreSQL" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
                     <mxGeometry relative="1" as="geometry"><mxPoint x="935" y="960" as="sourcePoint"/><mxPoint x="1445" y="960" as="targetPoint"/></mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="d_getme" name="5 - GET /api/auth/me">
+        <mxGraphModel dx="1649" dy="816" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="700" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="gm_title" value="FLUJO 5 — GET /api/auth/me (Sesión 10)" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=14;fontColor=#333333;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="8" width="900" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_sub" value="AuthContext llama /api/auth/me en mount. isInitialized evita flash a /login mientras dura la llamada." style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontColor=#666666;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="36" width="900" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_p1" value="Browser&#xa;(AuthContext mount)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="10" y="65" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_p2" value="apiClient.ts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="185" y="65" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_p3" value="Fastify Backend&#xa;+ AuthMiddleware" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="355" y="65" width="155" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_p4" value="GetMeController" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="530" y="65" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_p5" value="PrismaAuth&#xa;Repository" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="65" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_p6" value="PostgreSQL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="870" y="65" width="150" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_l1" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#aaaaaa;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="87" y="105" as="sourcePoint"/><mxPoint x="87" y="610" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_l2" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#aaaaaa;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="260" y="105" as="sourcePoint"/><mxPoint x="260" y="610" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_l3" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#aaaaaa;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="432" y="105" as="sourcePoint"/><mxPoint x="432" y="610" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_l4" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#aaaaaa;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="605" y="105" as="sourcePoint"/><mxPoint x="605" y="610" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_l5" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#aaaaaa;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="775" y="105" as="sourcePoint"/><mxPoint x="775" y="610" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_l6" value="" style="endArrow=none;html=1;dashed=1;strokeColor=#aaaaaa;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="945" y="105" as="sourcePoint"/><mxPoint x="945" y="610" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m1" value="1: App mount — checkAuth() via GET /api/auth/me" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="87" y="135" as="sourcePoint"/><mxPoint x="260" y="135" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m2" value="2: GET /api/auth/me  { Authorization: Bearer JWT }" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="260" y="170" as="sourcePoint"/><mxPoint x="432" y="170" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m3" value="3: verifyJWT(token) → { userId, role }" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="432" y="205" as="sourcePoint"/><mxPoint x="605" y="205" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m4" value="4: findById(userId)" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="605" y="240" as="sourcePoint"/><mxPoint x="775" y="240" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m5" value="5: SELECT id, email, role, profile_image, must_change_password, created_at FROM users WHERE id = ?" style="endArrow=block;endFill=1;html=1;fontSize=10;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="775" y="275" as="sourcePoint"/><mxPoint x="945" y="275" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m6" value="6: user record" style="endArrow=open;endFill=0;html=1;fontSize=10;dashed=1;strokeColor=#666666;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="945" y="310" as="sourcePoint"/><mxPoint x="775" y="310" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m7" value="7: User entity" style="endArrow=open;endFill=0;html=1;fontSize=10;dashed=1;strokeColor=#666666;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="775" y="345" as="sourcePoint"/><mxPoint x="605" y="345" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m8" value="8: HTTP 200  { user: { id, email, role, profilePhotoUrl, mustChangePassword, createdAt } }" style="endArrow=open;endFill=0;html=1;fontSize=10;dashed=1;strokeColor=#666666;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="605" y="380" as="sourcePoint"/><mxPoint x="260" y="380" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m9a" value="" style="endArrow=block;endFill=1;html=1;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="260" y="405" as="sourcePoint"/><mxPoint x="260" y="430" as="targetPoint"/>
+                        <Array as="points"><mxPoint x="295" y="405"/><mxPoint x="295" y="430"/></Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="gm_m9b" value="9: setUser(user) · isInitialized = true · ProtectedRoute renderiza (sin flash a /login)" style="text;html=1;fontSize=9;align=left;verticalAlign=top;" parent="1" vertex="1">
+                    <mxGeometry x="298" y="403" width="430" height="28" as="geometry"/>
+                </mxCell>
+                <mxCell id="gm_m10" value="10: Renderizar dashboard (sin flash a /login)" style="endArrow=open;endFill=0;html=1;fontSize=10;dashed=1;strokeColor=#666666;labelBackgroundColor=#ffffff;" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry"><mxPoint x="260" y="455" as="sourcePoint"/><mxPoint x="87" y="455" as="targetPoint"/></mxGeometry>
+                </mxCell>
+                <mxCell id="gm_note" value="Si el JWT falta o es inválido → AuthMiddleware responde 401&#xa;apiClient.ts intercepta 401 → intenta POST /api/auth/refresh&#xa;Si refresh falla → CustomEvent('auth:session-expired')&#xa;AuthProvider hace logout + redirect a /login" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;size=15;fillColor=#ffffc0;strokeColor=#999900;fontSize=9;align=left;" parent="1" vertex="1">
+                    <mxGeometry x="330" y="490" width="380" height="65" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

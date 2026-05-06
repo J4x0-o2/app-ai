@@ -21,17 +21,22 @@ AppAi/
 
 ---
 
-## Configuración en Arch Linux
+## Configuración inicial
 
-### 1. Dependencias del sistema
+### 1. Requisitos previos
 
-```bash
-sudo pacman -Syu
-sudo pacman -S git nodejs npm docker docker-compose base-devel python
-```
+| Herramienta | Versión mínima | Instalación |
+|-------------|---------------|-------------|
+| Node.js | 20.0.0 | [nodejs.org](https://nodejs.org) o [nvm](https://github.com/nvm-sh/nvm) |
+| npm | 9.0.0 | Incluido con Node.js |
+| Git | cualquiera | [git-scm.com](https://git-scm.com) |
+| Docker | 24+ | Ver paso 2 |
 
-> `base-devel` y `python` son necesarios para compilar `bcrypt` (módulo nativo vía `node-gyp`).
-> Arch incluye Node.js v22+. Fastify 5 requiere Node.js >= 20.
+> Se recomienda instalar Node.js via **nvm** para gestionar versiones fácilmente:
+> ```bash
+> nvm install 22
+> nvm use 22
+> ```
 
 Verificar versiones instaladas:
 
@@ -42,26 +47,36 @@ docker --version
 docker compose version
 ```
 
-### 2. Configurar Docker
+### 2. Instalar Docker
+
+- **Windows / macOS:** descarga e instala [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+- **Linux:** instala Docker Engine siguiendo la [guía oficial](https://docs.docker.com/engine/install/) para tu distribución y luego añade tu usuario al grupo `docker`:
 
 ```bash
-# Habilitar e iniciar el demonio Docker al arranque
-sudo systemctl enable --now docker
-
-# Agregar tu usuario al grupo docker (evita sudo en cada comando)
 sudo usermod -aG docker $USER
-
-# Aplicar el cambio de grupo sin cerrar sesión
+# Cerrar sesión y volver a entrar, o ejecutar:
 newgrp docker
 ```
 
-Verificar que Docker funciona sin sudo:
+Verificar que Docker funciona:
 
 ```bash
 docker ps
 ```
 
-### 3. Clonar el repositorio
+### 3. Dependencias de compilación para `bcrypt`
+
+`bcrypt` incluye código nativo que se compila durante `npm install`. Según tu sistema operativo:
+
+| Sistema | Qué instalar |
+|---------|-------------|
+| **Windows** | [Build Tools for Visual Studio](https://visualstudio.microsoft.com/visual-cpp-build-tools/) + Python 3 (o ejecutar `npm install --global windows-build-tools`) |
+| **macOS** | Xcode Command Line Tools: `xcode-select --install` |
+| **Linux (Debian/Ubuntu)** | `sudo apt install build-essential python3` |
+| **Linux (Fedora/RHEL)** | `sudo dnf groupinstall "Development Tools" && sudo dnf install python3` |
+| **Linux (Arch)** | `sudo pacman -S base-devel python` |
+
+### 4. Clonar el repositorio
 
 ```bash
 git clone <url-del-repositorio>
@@ -147,7 +162,7 @@ cd backend
 npm install
 ```
 
-> `bcrypt` compila binarios nativos durante la instalación. Si falla, asegúrate de tener `base-devel` y `python` instalados (`sudo pacman -S base-devel python`), luego borra `node_modules` y vuelve a instalar.
+> `bcrypt` compila binarios nativos durante la instalación. Si falla, instala las herramientas de compilación de tu sistema operativo (ver tabla en el paso 3 de *Configuración inicial*), luego borra `node_modules` y vuelve a instalar.
 
 ### Inicializar la base de datos
 
@@ -235,53 +250,81 @@ Acceder a la aplicación: `http://localhost:5173`
 
 ---
 
-## Solución de problemas en Arch Linux
+## Solución de problemas
 
-### `bcrypt` falla al compilar
+### `bcrypt` falla al compilar durante `npm install`
+
+Instala las herramientas de compilación nativas de tu sistema (ver tabla en *Configuración inicial*, paso 3) y vuelve a instalar:
 
 ```bash
-sudo pacman -S base-devel python
-cd backend && rm -rf node_modules && npm install
+cd backend
+rm -rf node_modules
+npm install
+```
+
+En Windows también puedes intentar:
+
+```powershell
+npm install --global windows-build-tools   # requiere PowerShell como administrador
 ```
 
 ### Error de OpenSSL con Prisma
 
-Arch usa OpenSSL 3. En caso de errores:
+Prisma genera binarios que deben coincidir con la versión de OpenSSL del sistema. Si ves errores relacionados con OpenSSL al ejecutar `npx prisma generate` o al arrancar el servidor:
 
 ```bash
-sudo pacman -S openssl
-npx prisma generate   # fuerza regeneración de binarios
+# Fuerza la regeneración de los binarios de Prisma
+npx prisma generate
 ```
 
-### `permission denied` con Docker
+Si el problema persiste en Linux, asegúrate de tener OpenSSL 1.1 o 3 instalado según tu distribución. En macOS, instala OpenSSL via Homebrew: `brew install openssl`.
+
+### `permission denied` con Docker (Linux)
 
 ```bash
 sudo usermod -aG docker $USER
+# Cierra sesión y vuelve a entrar, o ejecuta:
 newgrp docker
 ```
 
-### `ECONNREFUSED localhost:5432`
+### `ECONNREFUSED localhost:5432` — PostgreSQL no responde
 
-El contenedor de PostgreSQL no está corriendo:
+El contenedor de PostgreSQL no está corriendo o tardó en iniciar:
 
 ```bash
-cd vite-project && docker compose up -d
-docker compose ps   # verificar estado
+cd vite-project
+docker compose up -d
+docker compose ps        # verificar que el estado sea "running"
+docker compose logs postgres   # ver si hay errores de arranque
 ```
 
 ### Puerto ya en uso
 
+**Linux / macOS:**
 ```bash
-ss -tlnp | grep :3000    # ver qué proceso usa el puerto 3000
-ss -tlnp | grep :5173    # ver qué proceso usa el puerto 5173
+lsof -i :3000   # qué proceso usa el puerto 3000
+lsof -i :5173   # qué proceso usa el puerto 5173
 kill -9 <PID>
+```
+
+**Windows (PowerShell):**
+```powershell
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
 ```
 
 ### Prisma `P1001: Can't reach database server`
 
 1. Verificar que el contenedor Docker esté arriba: `docker compose ps`
 2. Verificar la cadena de conexión en `backend/.env`
-3. Confirmar que `localhost:5432` es accesible: `nc -zv localhost 5432`
+3. **Linux / macOS:** `nc -zv localhost 5432`
+4. **Windows:** `Test-NetConnection -ComputerName localhost -Port 5432` (PowerShell)
+
+### Docker Desktop no arranca (Windows / macOS)
+
+- Asegúrate de tener la virtualización habilitada en la BIOS (Windows).
+- En macOS Apple Silicon, Docker Desktop requiere Rosetta 2: `softwareupdate --install-rosetta`.
+- Verifica que el servicio esté corriendo antes de ejecutar `docker compose up`.
 
 ---
 
@@ -291,26 +334,31 @@ kill -9 <PID>
 Browser (React 19) ← http://localhost:5173
         ↓ HTTP/JSON + Bearer JWT          SSE streaming (chat)
 Fastify 5 ← http://localhost:3000
-    ├── AuthMiddleware (JWT + Refresh Tokens rotativos)
-    ├── RoleGuard (RBAC: ADMIN / GESTOR / INSTRUCTOR / EMPLEADO)
-    ├── @fastify/compress (gzip/brotli global)
-    ├── Rate Limit distribuido (Redis, 30 req/min en /api/chat y /api/chat/stream)
+    ├── AuthMiddleware      — verifica JWT Bearer → request.user
+    ├── RoleGuard           — RBAC (ADMIN / GESTOR / INSTRUCTOR / EMPLEADO)
+    ├── RequestContext      — AsyncLocalStorage: correlationId + header x-request-id
+    ├── @fastify/compress   — gzip/brotli global (compatible con SSE hijack)
+    ├── Rate Limit          — Redis distribuido, 30 req/min por userId en /api/chat y /api/chat/stream
     └── Módulo AI (pipeline RAG):
-          InputGuardrail → Embedding (Gemini) → SemanticCache check (pgvector HNSW)
-          → [MISS] VectorSearch (pgvector HNSW halfvec) → LLMCallbackHandler
-          → LLM (Gemini 2.5 Flash) → OutputGuardrail → store cache async
-          → SSE stream (POST /api/chat/stream) con historial de 10 mensajes
+          InputGuardrail → Embedding (Gemini) → SemanticCache check (pgvector HNSW halfvec ≥ 0.92)
+            ↳ HIT: respuesta cacheada como SSE chunk único
+            ↳ MISS: VectorSearch HNSW (top 5 chunks) → LLMCallbackHandler [correlationId]
+                    → LLM (Gemini 2.5 Flash, historial 10 msgs) → OutputGuardrail
+                    → SSE stream + store cache async
                 ↓ Prisma ORM
 PostgreSQL 16 + pgvector 0.8.2 ← localhost:5432 (Docker)
-    ├── 14 modelos + ai_response_cache (semantic cache HNSW halfvec TTL 24h)
-    └── Índice HNSW halfvec(3072) en document_embeddings y ai_response_cache
+    ├── 14 modelos (users, roles, conversations, messages, documents,
+    │   document_chunks, document_embeddings, ai_queries, audit_logs,
+    │   models, llm_models, password_reset_tokens, refresh_tokens, user_roles)
+    ├── ai_response_cache   — semantic cache con HNSW halfvec(3072), TTL 24h
+    └── Índices HNSW halfvec(3072) en document_embeddings y ai_response_cache
 Redis 7 ← localhost:6379 (Docker)
-    ├── BullMQ: cola asíncrona de procesamiento de documentos
-    └── Rate limiting distribuido (2 conexiones ioredis separadas)
+    ├── BullMQ              — cola asíncrona de procesamiento de documentos (concurrency=2, retry×3)
+    └── Rate limiting       — 2 conexiones ioredis separadas (queue / rate-limit)
                 ↕
-Google Gemini API (externa)              Mailtrap SMTP (externa)
-    ├── gemini-embedding-001 (3072 dims)  └── Welcome emails
-    └── gemini-2.5-flash (LLM)               Reset de contraseña
+Google Gemini API (externa)              Mailtrap SMTP (externa — dev)
+    ├── gemini-embedding-001 (3072 dims)  └── Emails de bienvenida y reset de contraseña
+    └── gemini-2.5-flash (LLM)
 ```
 
 ## Pipeline RAG
@@ -343,6 +391,7 @@ Google Gemini API (externa)              Mailtrap SMTP (externa)
 | `POST` | `/api/auth/logout` | Revocar todos los refresh tokens del usuario (requiere JWT) |
 | `POST` | `/api/auth/forgot-password` | Solicitar reset de contraseña por email |
 | `POST` | `/api/auth/reset-password` | Resetear contraseña con token (24h de validez) |
+| `GET` | `/api/auth/me` | Obtener perfil del usuario autenticado desde BD (requiere JWT) |
 | `PUT` | `/api/auth/change-password` | Cambiar contraseña (requiere JWT + contraseña actual) |
 | `POST` | `/api/users` | Crear usuario con contraseña autogenerada (ADMIN/GESTOR) |
 | `GET` | `/api/users` | Listar usuarios (ADMIN/GESTOR) |

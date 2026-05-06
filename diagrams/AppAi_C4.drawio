@@ -164,8 +164,8 @@
                 <mxCell id="cmp_roleguard" value="&lt;b&gt;RoleGuard&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Middleware RBAC factory&lt;br/&gt;valida roles vs PERMISSIONS&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
                     <mxGeometry x="235" y="270" width="155" height="100" as="geometry"/>
                 </mxCell>
-                <mxCell id="cmp_loginctrl" value="&lt;b&gt;Auth Controllers&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/auth/login&lt;br/&gt;POST /api/auth/refresh&lt;br/&gt;POST /api/auth/logout&lt;br/&gt;PUT /api/auth/change-password&lt;br/&gt;POST /api/auth/forgot-password&lt;br/&gt;POST /api/auth/reset-password&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="400" width="155" height="102" as="geometry"/>
+                <mxCell id="cmp_loginctrl" value="&lt;b&gt;Auth Controllers&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/auth/login&lt;br/&gt;POST /api/auth/refresh&lt;br/&gt;POST /api/auth/logout&lt;br/&gt;PUT /api/auth/change-password&lt;br/&gt;POST /api/auth/forgot-password&lt;br/&gt;POST /api/auth/reset-password&lt;br/&gt;GET /api/auth/me (GetMeController)&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="400" width="155" height="118" as="geometry"/>
                 </mxCell>
                 <mxCell id="FF_dOj3kqu3RbAtnNuLx-1" value="" style="edgeStyle=none;html=1;" edge="1" parent="1" source="cmp_userctrl" target="cmp_docctrl">
                     <mxGeometry relative="1" as="geometry"/>
@@ -174,13 +174,16 @@
                     <mxGeometry x="235" y="400" width="155" height="102" as="geometry"/>
                 </mxCell>
                 <mxCell id="cmp_chatctrl" value="&lt;b&gt;Chat Controllers&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;ChatController: POST /api/chat&lt;br/&gt;StreamChatController: POST /api/chat/stream&lt;br/&gt;GET/DELETE /api/conversations&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="520" width="155" height="100" as="geometry"/>
+                    <mxGeometry x="60" y="538" width="155" height="100" as="geometry"/>
                 </mxCell>
                 <mxCell id="cmp_docctrl" value="&lt;b&gt;Document Controllers&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;Upload / List / Delete&lt;br/&gt;Download · /api/documents&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
-                    <mxGeometry x="235" y="520" width="155" height="100" as="geometry"/>
+                    <mxGeometry x="235" y="538" width="155" height="100" as="geometry"/>
                 </mxCell>
                 <mxCell id="cmp_aictrl" value="&lt;b&gt;AIController&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;POST /api/ai/process-document&lt;br/&gt;POST /api/ai/ask&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
-                    <mxGeometry x="145" y="650" width="160" height="100" as="geometry"/>
+                    <mxGeometry x="145" y="660" width="160" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="cmp_reqctx" value="&lt;b&gt;RequestContext (AsyncLocalStorage)&lt;/b&gt;&lt;br/&gt;&lt;font color=&quot;#555&quot; style=&quot;font-size:9px&quot;&gt;[Componente — cross-cutting]&lt;/font&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px&quot;&gt;shared/context/requestContext.ts&lt;br/&gt;onRequest hook: header x-request-id en respuesta&lt;br/&gt;correlationId propagado por AsyncLocalStorage&lt;br/&gt;LLMCallbackHandler lo lee en cada log [START/END/ERROR]&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#85BBF0;strokeColor=#5A9DD5;fontColor=#000000;fontSize=10;arcSize=6;" parent="1" vertex="1">
+                    <mxGeometry x="60" y="780" width="330" height="108" as="geometry"/>
                 </mxCell>
                 <mxCell id="cmp_lay_app" value="&lt;b&gt;APPLICATION&lt;/b&gt;  /src/application/" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=12;fontStyle=1;fontColor=#1a1a2e;verticalAlign=top;arcSize=2;" parent="1" vertex="1">
                     <mxGeometry x="450" y="80" width="390" height="1060" as="geometry"/>
