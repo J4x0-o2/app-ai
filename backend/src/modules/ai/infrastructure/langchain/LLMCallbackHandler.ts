@@ -15,11 +15,21 @@ import { getCorrelationId } from '../../../../shared/context/requestContext';
 export class LLMCallbackHandler extends BaseCallbackHandler {
   name = 'LLMCallbackHandler';
 
-  // Mapa para rastrear el tiempo de inicio de cada llamada por su runId único
-  private startTimes = new Map<string, number>();
+  private startTimes   = new Map<string, number>();
+  private promptLengths = new Map<string, number>();
+
+  // Expone las métricas del último LLM call para que el use case las persista en ai_queries
+  public lastCallMetrics: {
+    inputTokens: number | null;
+    outputTokens: number | null;
+    totalTokens: number | null;
+    latencyMs: number | null;
+    inputTokensEstimated: boolean;
+  } | null = null;
 
   handleLLMStart(llm: Serialized, prompts: string[], runId: string): void {
     this.startTimes.set(runId, Date.now());
+    this.promptLengths.set(runId, prompts[0]?.length ?? 0);
 
     const modelName = Array.isArray(llm.id) ? llm.id[llm.id.length - 1] : 'unknown';
     const promptLength = prompts[0]?.length ?? 0;
@@ -28,32 +38,33 @@ export class LLMCallbackHandler extends BaseCallbackHandler {
   }
 
   handleLLMEnd(output: LLMResult, runId: string): void {
-    const startTime = this.startTimes.get(runId);
-    const latency = startTime !== undefined ? Date.now() - startTime : null;
-    this.startTimes.delete(runId);
+    const startTime    = this.startTimes.get(runId);
+    const promptLength = this.promptLengths.get(runId) ?? 0;
+    const latencyMs    = startTime !== undefined ? Date.now() - startTime : null;
 
-    // Google Gemini puede devolver el uso de tokens bajo distintas claves
-    // dependiendo de la versión del SDK — revisamos las dos posibles
-    const usageMetadata = output.llmOutput?.usageMetadata;
+    this.startTimes.delete(runId);
+    this.promptLengths.delete(runId);
+
     const tokenUsage = output.llmOutput?.tokenUsage;
 
-    const promptTokens =
-      usageMetadata?.promptTokenCount ??
-      tokenUsage?.promptTokens ??
-      'N/A';
+    const outputTokens = tokenUsage?.completionTokens ?? null;
 
-    const completionTokens =
-      usageMetadata?.candidatesTokenCount ??
-      tokenUsage?.completionTokens ??
-      'N/A';
+    // Gemini streaming no reporta prompt tokens (siempre 0).
+    // Fallback: estimación estándar chars / 4.
+    const rawPromptTokens = tokenUsage?.promptTokens ?? 0;
+    const inputTokensEstimated = rawPromptTokens === 0 && promptLength > 0;
+    const inputTokens = rawPromptTokens > 0
+      ? rawPromptTokens
+      : promptLength > 0 ? Math.round(promptLength / 4) : null;
 
-    const totalTokens =
-      usageMetadata?.totalTokenCount ??
-      tokenUsage?.totalTokens ??
-      'N/A';
+    const totalTokens = inputTokens !== null && outputTokens !== null
+      ? inputTokens + outputTokens
+      : null;
+
+    this.lastCallMetrics = { inputTokens, outputTokens, totalTokens, latencyMs, inputTokensEstimated };
 
     console.log(
-      `[LLM Callback][${getCorrelationId()}] END — latency: ${latency !== null ? `${latency}ms` : 'N/A'} | tokens: { prompt: ${promptTokens}, completion: ${completionTokens}, total: ${totalTokens} }`
+      `[LLM Callback][${getCorrelationId()}] END — latency: ${latencyMs !== null ? `${latencyMs}ms` : 'N/A'} | tokens: { prompt: ${inputTokens ?? 'N/A'}${inputTokensEstimated ? ' (est)' : ''}, completion: ${outputTokens ?? 'N/A'}, total: ${totalTokens ?? 'N/A'} }`
     );
   }
 

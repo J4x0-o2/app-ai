@@ -4,14 +4,19 @@ import { LLMCallbackHandler } from "./LLMCallbackHandler";
 
 export class GeminiAIService implements AIService {
   private llm: ChatGoogleGenerativeAI;
+  private handler = new LLMCallbackHandler();
 
   constructor() {
     this.llm = new ChatGoogleGenerativeAI({
       model: "gemini-2.5-flash",
       apiKey: process.env.GEMINI_API_KEY,
       temperature: 0,
-      callbacks: [new LLMCallbackHandler()],
+      callbacks: [this.handler],
     });
+  }
+
+  getLastCallMetrics() {
+    return this.handler.lastCallMetrics;
   }
 
   private buildPrompt(context: string, question: string, history?: ChatMessage[]): string {
