@@ -68,6 +68,7 @@ import { PasswordResetController } from '../controllers/auth/PasswordResetContro
 import { ChangePasswordController } from '../controllers/auth/ChangePasswordController';
 import { RefreshTokenController } from '../controllers/auth/RefreshTokenController';
 import { GetMeController } from '../controllers/auth/GetMeController';
+import { AdminDashboardController } from '../controllers/admin/AdminDashboardController';
 import { DatabaseAuthProvider } from '../../infrastructure/auth/DatabaseAuthProvider';
 import { LoginUserUseCase } from '../../application/use-cases/auth/LoginUserUseCase';
 import { LoginController } from '../controllers/auth/LoginController';
@@ -236,6 +237,7 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     const getDocumentStatusController = new GetDocumentStatusController(documentRepository);
 
     const aiController = new AIController(processDocumentUseCase, askAIQuestionUseCase);
+    const adminDashboardController = new AdminDashboardController();
 
     // ======================================
     // Routes
@@ -314,6 +316,12 @@ export const routes: FastifyPluginAsync = async (server: FastifyInstance) => {
     server.get<{ Params: { conversationId: string }, Querystring: { userId: string } }>('/api/chat/:conversationId/history', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.CHAT_ACCESS)] }, chatController.getHistory.bind(chatController));
     server.get('/api/conversations', { preHandler: [authMiddleware.handle] }, chatController.list.bind(chatController));
     server.delete<{ Params: { id: string } }>('/api/conversations/:id', { preHandler: [authMiddleware.handle] }, chatController.delete.bind(chatController));
+
+    // Admin Dashboard Routes (ADMIN only)
+    server.get('/api/admin/dashboard/overview', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.VIEW_ADMIN_DASHBOARD)] }, adminDashboardController.overview.bind(adminDashboardController));
+    server.get('/api/admin/dashboard/llm-usage', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.VIEW_ADMIN_DASHBOARD)] }, adminDashboardController.llmUsage.bind(adminDashboardController));
+    server.get('/api/admin/dashboard/cache', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.VIEW_ADMIN_DASHBOARD)] }, adminDashboardController.cacheStats.bind(adminDashboardController));
+    server.get('/api/admin/dashboard/queue', { preHandler: [authMiddleware.handle, RoleGuard(PERMISSIONS.VIEW_ADMIN_DASHBOARD)] }, adminDashboardController.queueStats.bind(adminDashboardController));
 
     // AI Module Routes (RAG)
     server.post<{ Body: { documentId: string } }>('/ai/process-document', { preHandler: [authMiddleware.handle] }, aiController.processDocument.bind(aiController));

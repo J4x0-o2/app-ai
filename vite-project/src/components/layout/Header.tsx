@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, User, LogOut } from 'lucide-react';
+import { Menu, User, LogOut, LayoutDashboard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Avatar } from '../ui/Avatar';
 import { DropdownMenu } from '../ui/DropdownMenu';
@@ -34,6 +34,11 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle, showMenuButton = t
             </div>
 
             <div className={styles.rightSection}>
+                {user?.role === 'ADMIN' && (
+                    <Link to="/admin/dashboard" className={styles.iconButton} title="Dashboard IA" aria-label="Dashboard IA">
+                        <LayoutDashboard size={20} />
+                    </Link>
+                )}
                 <DropdownMenu
                     trigger={
                         <div className={styles.userInfo}>

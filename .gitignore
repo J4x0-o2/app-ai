@@ -50,5 +50,8 @@ Thumbs.db
 #*.md
 #!README.md
 
-# Claude Code
-#.claude/
+#Claude Code
+.claude/
+
+#Explicaciones de diagramas
+explicaciones

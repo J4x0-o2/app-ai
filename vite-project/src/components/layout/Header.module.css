@@ -62,3 +62,20 @@
 .userInfo:hover {
     background-color: var(--color-bg-gray);
 }
+
+.iconButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    padding: 0.4rem;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s, color 0.2s;
+    text-decoration: none;
+    margin-right: 0.5rem;
+}
+
+.iconButton:hover {
+    background-color: var(--color-bg-gray);
+    color: var(--color-text-main);
+}

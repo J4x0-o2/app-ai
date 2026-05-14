@@ -10,6 +10,7 @@ import { DocumentsPage } from './pages/DocumentsPage';
 import { UsersPage } from './pages/UsersPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
+import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import './index.css';
 
 function App() {
@@ -34,6 +35,9 @@ function App() {
               </Route>
               <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'GESTOR']} />}>
                 <Route path="/users" element={<UsersPage />} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
               </Route>
             </Route>
             <Route path="/profile" element={<ProfilePage />} />

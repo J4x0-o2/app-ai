@@ -347,10 +347,13 @@ Fastify 5 ← http://localhost:3000
                     → SSE stream + store cache async
                 ↓ Prisma ORM
 PostgreSQL 16 + pgvector 0.8.2 ← localhost:5432 (Docker)
-    ├── 14 modelos (users, roles, conversations, messages, documents,
+    ├── 17 modelos (users, roles, conversations, messages, documents,
     │   document_chunks, document_embeddings, ai_queries, audit_logs,
-    │   models, llm_models, password_reset_tokens, refresh_tokens, user_roles)
+    │   models, llm_models, password_reset_tokens, refresh_tokens, user_roles,
+    │   ai_response_cache, ai_cache_stats, ai_job_history)
     ├── ai_response_cache   — semantic cache con HNSW halfvec(3072), TTL 24h
+    ├── ai_cache_stats      — contadores hit/miss de caché por día/proveedor/modelo
+    ├── ai_job_history      — historial de jobs BullMQ (duración, errores, intentos)
     └── Índices HNSW halfvec(3072) en document_embeddings y ai_response_cache
 Redis 7 ← localhost:6379 (Docker)
     ├── BullMQ              — cola asíncrona de procesamiento de documentos (concurrency=2, retry×3)
@@ -375,12 +378,12 @@ Google Gemini API (externa)              Mailtrap SMTP (externa — dev)
 
 ## RBAC — Roles y permisos
 
-| Rol | CREATE_USER | LIST_USER | UPDATE_USER | DELETE_USER | UPLOAD_DOC | LIST_DOC | DELETE_DOC | DOWNLOAD_DOC | CHAT | VER DOCS | VER USUARIOS |
-|-----|:-----------:|:---------:|:-----------:|:-----------:|:----------:|:--------:|:----------:|:------------:|:----:|:--------:|:------------:|
-| `ADMIN` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `GESTOR` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
-| `INSTRUCTOR` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `EMPLEADO` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ | ❌ |
+| Rol | CREATE_USER | LIST_USER | UPDATE_USER | DELETE_USER | UPLOAD_DOC | LIST_DOC | DELETE_DOC | DOWNLOAD_DOC | CHAT | DASHBOARD IA |
+|-----|:-----------:|:---------:|:-----------:|:-----------:|:----------:|:--------:|:----------:|:------------:|:----:|:------------:|
+| `ADMIN` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `GESTOR` | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| `INSTRUCTOR` | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `EMPLEADO` | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ✅ | ❌ |
 
 ## Endpoints principales
 
@@ -407,5 +410,9 @@ Google Gemini API (externa)              Mailtrap SMTP (externa — dev)
 | `POST` | `/api/chat/stream` | Enviar prompt → respuesta RAG vía SSE streaming con semantic cache (todos los roles) |
 | `GET` | `/api/conversations` | Listar conversaciones del usuario |
 | `DELETE` | `/api/conversations/:id` | Eliminar conversación |
+| `GET` | `/api/admin/dashboard/overview` | Tarjetas resumen: queries, tokens, cache hit rate, usuarios activos, jobs (solo ADMIN) |
+| `GET` | `/api/admin/dashboard/llm-usage` | Uso LLM por día — queries, tokens, latencia por proveedor/modelo (solo ADMIN) |
+| `GET` | `/api/admin/dashboard/cache` | Stats de caché semántico — hits/misses por día con tasa de acierto (solo ADMIN) |
+| `GET` | `/api/admin/dashboard/queue` | Jobs BullMQ — resumen diario + historial de fallos con error y documento (solo ADMIN) |
 | `GET` | `/health` | Health check DB + Redis (200 ok / 503 degraded) |
 | `GET` | `/health/db` | Health check solo BD (compatibilidad) |
