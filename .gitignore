@@ -55,3 +55,7 @@ Thumbs.db
 
 #Explicaciones de diagramas
 explicaciones
+# Local data
+vite-project/postgres/
+backend/storage/documents/*
+!backend/storage/documents/.gitkeep
